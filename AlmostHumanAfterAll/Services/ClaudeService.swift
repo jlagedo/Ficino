@@ -1,6 +1,6 @@
 import Foundation
 
-actor ClaudeService {
+actor ClaudeService: CommentaryService {
     private var claudePath: String?
     private var process: Process?
     private var stdinHandle: FileHandle?
@@ -298,13 +298,16 @@ actor ClaudeService {
             // Safety timeout — don't block forever if the old result never comes
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
-                guard let self else { return }
-                if let dc = self.drainContinuation {
-                    self.drainContinuation = nil
-                    dc.resume()
-                    NSLog("[Claude] Drain timed out after 5s, proceeding anyway")
-                }
+                await self?.handleDrainTimeout()
             }
+        }
+    }
+
+    private func handleDrainTimeout() {
+        if let dc = drainContinuation {
+            drainContinuation = nil
+            dc.resume()
+            NSLog("[Claude] Drain timed out after 5s, proceeding anyway")
         }
     }
 

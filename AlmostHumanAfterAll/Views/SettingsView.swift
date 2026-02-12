@@ -91,23 +91,42 @@ struct SettingsView: View {
 
                     Divider()
 
-                    // Model picker
+                    // Engine picker
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Claude Model")
+                        Text("AI Engine")
                             .font(.caption)
                             .fontWeight(.medium)
 
-                        Picker("", selection: $appState.claudeModel) {
-                            Text("Haiku 4.5").tag("claude-haiku-4-5-20251001")
-                            Text("Sonnet 4.5").tag("claude-sonnet-4-5-20250929")
+                        Picker("", selection: $appState.engine) {
+                            Text("Claude").tag(AIEngine.claude)
+                            Text("Apple Intelligence").tag(AIEngine.appleIntelligence)
                         }
                         .labelsHidden()
                         .pickerStyle(.segmented)
-                        .accessibilityLabel("Claude model")
+                        .accessibilityLabel("AI engine")
+                    }
 
-                        Text("Haiku is faster, Sonnet is more expressive")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                    // Claude model picker (only when Claude engine selected)
+                    if appState.engine == .claude {
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Claude Model")
+                                .font(.caption)
+                                .fontWeight(.medium)
+
+                            Picker("", selection: $appState.claudeModel) {
+                                Text("Haiku 4.5").tag("claude-haiku-4-5-20251001")
+                                Text("Sonnet 4.5").tag("claude-sonnet-4-5-20250929")
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            .accessibilityLabel("Claude model")
+
+                            Text("Haiku is faster, Sonnet is more expressive")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     Divider()

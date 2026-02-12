@@ -27,12 +27,29 @@ final class AppState: ObservableObject {
     @Published var claudeModel: String {
         didSet { UserDefaults.standard.set(claudeModel, forKey: "claudeModel") }
     }
+    @Published var engine: AIEngine {
+        didSet { UserDefaults.standard.set(engine.rawValue, forKey: "aiEngine") }
+    }
 
     // MARK: - Services
     private let musicListener = MusicListener()
     private let claudeService = ClaudeService()
     private let artworkService = ArtworkService()
     let notificationService = NotificationService()
+
+    private var appleIntelligenceService: (any CommentaryService)?
+
+    private var activeService: any CommentaryService {
+        switch engine {
+        case .claude:
+            return claudeService
+        case .appleIntelligence:
+            if let service = appleIntelligenceService {
+                return service
+            }
+            return claudeService // fallback
+        }
+    }
 
     private var lastTrackID: String?
     private var trackStartTime: Date?
@@ -59,6 +76,20 @@ final class AppState: ObservableObject {
         self.notificationDuration = defaults.object(forKey: "notificationDuration") as? TimeInterval ?? 30.0
         self.claudeModel = defaults.string(forKey: "claudeModel") ?? "claude-haiku-4-5-20251001"
 
+        if let savedEngine = defaults.string(forKey: "aiEngine"),
+           let e = AIEngine(rawValue: savedEngine) {
+            self.engine = e
+        } else {
+            self.engine = .claude
+        }
+
+        // Create Apple Intelligence service on macOS 26+
+        #if canImport(FoundationModels)
+        if #available(macOS 26, *) {
+            self.appleIntelligenceService = AppleIntelligenceService()
+        }
+        #endif
+
         start()
     }
 
@@ -71,14 +102,16 @@ final class AppState: ObservableObject {
         hasStarted = true
         NSLog("[AlmostHuman] Starting services...")
 
-        // First-run validation: check Claude CLI is accessible
-        Task {
-            do {
-                try await claudeService.validateSetup()
-                NSLog("[AlmostHuman] Claude CLI validation passed")
-            } catch {
-                NSLog("[AlmostHuman] Setup validation failed: %@", error.localizedDescription)
-                setupError = error.localizedDescription
+        // First-run validation: check Claude CLI is accessible (only when using Claude engine)
+        if engine == .claude {
+            Task {
+                do {
+                    try await claudeService.validateSetup()
+                    NSLog("[AlmostHuman] Claude CLI validation passed")
+                } catch {
+                    NSLog("[AlmostHuman] Setup validation failed: %@", error.localizedDescription)
+                    setupError = error.localizedDescription
+                }
             }
         }
 
@@ -95,6 +128,7 @@ final class AppState: ObservableObject {
     func stop() {
         musicListener.stop()
         commentTask?.cancel()
+        Task { await activeService.cancelCurrent() }
     }
 
     // MARK: - Track Handling
@@ -135,16 +169,19 @@ final class AppState: ObservableObject {
 
         commentTask = Task {
             isLoading = true
-            NSLog("[AppState] Fetching artwork + commentary in parallel...")
+            let service = activeService
+            NSLog("[AppState] Fetching artwork + commentary in parallel (engine: %@)...", engine.rawValue)
 
-            // Sync model setting to service
-            await claudeService.setModel(claudeModel)
+            // Sync model setting to Claude service when using Claude
+            if engine == .claude {
+                await claudeService.setModel(claudeModel)
+            }
 
             // Fetch artwork and commentary in parallel
             async let artworkResult = artworkService.fetchArtwork()
             async let commentResult: Result<String, Error> = {
                 do {
-                    let result = try await claudeService.getCommentary(for: track, personality: personality)
+                    let result = try await service.getCommentary(for: track, personality: personality)
                     return .success(result)
                 } catch {
                     return .failure(error)
@@ -164,8 +201,8 @@ final class AppState: ObservableObject {
 
             switch result {
             case .success(let comment) where comment.isEmpty:
-                NSLog("[AppState] Empty comment from Claude")
-                errorMessage = "Claude returned an empty response"
+                NSLog("[AppState] Empty comment from %@", engine.rawValue)
+                errorMessage = "\(engine.rawValue) returned an empty response"
 
             case .success(let comment):
                 NSLog("[AppState] Got comment (%d chars), showing notification", comment.count)
@@ -206,7 +243,7 @@ final class AppState: ObservableObject {
                 }
 
             case .failure(let error):
-                NSLog("[AppState] Claude error: %@", error.localizedDescription)
+                NSLog("[AppState] %@ error: %@", engine.rawValue, error.localizedDescription)
                 if error is CancellationError {
                     // Don't show error for intentional cancellation
                     return
@@ -221,11 +258,12 @@ final class AppState: ObservableObject {
     private func requestReview(personality: Personality, notificationDuration: Double) async {
         guard !Task.isCancelled else { return }
 
-        NSLog("[AppState] Requesting 5-song review...")
+        let service = activeService
+        NSLog("[AppState] Requesting 5-song review (engine: %@)...", engine.rawValue)
 
         do {
             // Fetch review and wait for song notification to finish in parallel
-            async let reviewResult = claudeService.getReview(personality: personality)
+            async let reviewResult = service.getReview(personality: personality)
             try await Task.sleep(nanoseconds: UInt64((notificationDuration + 1) * 1_000_000_000))
 
             let review = try await reviewResult

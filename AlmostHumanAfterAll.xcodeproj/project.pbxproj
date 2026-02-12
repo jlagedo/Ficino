@@ -22,6 +22,9 @@
 		A10013 /* PersonalityPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10013 /* PersonalityPickerView.swift */; };
 		A10014 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014 /* SettingsView.swift */; };
 		A10015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10015 /* Assets.xcassets */; };
+		A10016 /* CommentaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018 /* CommentaryService.swift */; };
+		A10017 /* AIEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10019 /* AIEngine.swift */; };
+		A10018 /* AppleIntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10020 /* AppleIntelligenceService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +45,9 @@
 		B10015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10017 /* AlmostHumanAfterAll.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AlmostHumanAfterAll.entitlements; sourceTree = "<group>"; };
+		B10018 /* CommentaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentaryService.swift; sourceTree = "<group>"; };
+		B10019 /* AIEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIEngine.swift; sourceTree = "<group>"; };
+		B10020 /* AppleIntelligenceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceService.swift; sourceTree = "<group>"; };
 		C10001 /* AlmostHumanAfterAll.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlmostHumanAfterAll.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -84,6 +90,7 @@
 				B10002 /* TrackInfo.swift */,
 				B10003 /* CommentEntry.swift */,
 				B10004 /* Personality.swift */,
+				B10019 /* AIEngine.swift */,
 				B10005 /* AppState.swift */,
 			);
 			path = Models;
@@ -92,8 +99,10 @@
 		E10004 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B10018 /* CommentaryService.swift */,
 				B10006 /* MusicListener.swift */,
 				B10007 /* ClaudeService.swift */,
+				B10020 /* AppleIntelligenceService.swift */,
 				B10008 /* ArtworkService.swift */,
 				B10009 /* NotificationService.swift */,
 			);
@@ -203,6 +212,9 @@
 				A10012 /* HistoryView.swift in Sources */,
 				A10013 /* PersonalityPickerView.swift in Sources */,
 				A10014 /* SettingsView.swift in Sources */,
+				A10016 /* CommentaryService.swift in Sources */,
+				A10017 /* AIEngine.swift in Sources */,
+				A10018 /* AppleIntelligenceService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
