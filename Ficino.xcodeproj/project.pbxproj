@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -25,6 +25,7 @@
 		A10016 /* CommentaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10018 /* CommentaryService.swift */; };
 		A10017 /* AIEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10019 /* AIEngine.swift */; };
 		A10018 /* AppleIntelligenceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10020 /* AppleIntelligenceService.swift */; };
+		AECBA0C02F3ED892000EAF76 /* MusicContext in Frameworks */ = {isa = PBXBuildFile; productRef = AECBA0BF2F3ED892000EAF76 /* MusicContext */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,11 +52,16 @@
 		C10001 /* Ficino.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ficino.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AEDE2C322F3E761B009D794D /* docs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = docs; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		D10001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AECBA0C02F3ED892000EAF76 /* MusicContext in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +71,7 @@
 		E10001 = {
 			isa = PBXGroup;
 			children = (
+				AEDE2C322F3E761B009D794D /* docs */,
 				E10002 /* Ficino */,
 				E10006 /* Products */,
 			);
@@ -173,6 +180,9 @@
 				Base,
 			);
 			mainGroup = E10001;
+			packageReferences = (
+				AECBA0BE2F3ED892000EAF76 /* XCLocalSwiftPackageReference "MusicContext" */,
+			);
 			productRefGroup = E10006 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -291,15 +301,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VPS2J2F4X3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ficino/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Ficino needs access to Apple Music to fetch album artwork for your currently playing track.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.ficino;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jlagedo.ficino;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -368,15 +381,18 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VPS2J2F4X3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Ficino/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Ficino needs access to Apple Music to fetch album artwork for your currently playing track.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = dev.ficino;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jlagedo.ficino;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -405,6 +421,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		AECBA0BE2F3ED892000EAF76 /* XCLocalSwiftPackageReference "MusicContext" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = MusicContext;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AECBA0BF2F3ED892000EAF76 /* MusicContext */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MusicContext;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F10004 /* Project object */;
 }

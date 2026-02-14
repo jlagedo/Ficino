@@ -31,6 +31,13 @@ final class MusicListener {
             return
         }
 
+        // Dump every key/value from the notification for debugging
+        NSLog("[MusicListener] ── playerInfo dump (%d keys) ──", userInfo.count)
+        for (key, value) in userInfo.sorted(by: { "\($0.key)" < "\($1.key)" }) {
+            NSLog("[MusicListener]   %@ = %@ (%@)", "\(key)", "\(value)", String(describing: type(of: value)))
+        }
+        NSLog("[MusicListener] ── end dump ──")
+
         let playerState = userInfo["Player State"] as? String ?? "unknown"
         let name = userInfo["Name"] as? String ?? "?"
         let artist = userInfo["Artist"] as? String ?? "?"
