@@ -30,28 +30,38 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 **Pattern:** MVVM with a single `AppState` observable object coordinating services. Views bind to `@StateObject AppState`.
 
 **Source layout:**
-- `Ficino/Models/` — Data types and state (`AppState`, `TrackInfo`, `Personality`, `CommentEntry`)
-- `Ficino/Services/` — Business logic (`MusicListener`, `AppleIntelligenceService`, `ArtworkService`, `NotificationService`, `CommentaryService`)
+- `Ficino/Models/` — Data types and state (`AppState`, `TrackInfo`, `CommentEntry`)
+- `Ficino/Services/` — Business logic (`MusicListener`, `ArtworkService`, `NotificationService`)
 - `Ficino/Views/` — SwiftUI components (`MenuBarView`, `NowPlayingView`, `HistoryView`, `SettingsView`)
-- `MusicContext/` — Swift package for fetching music metadata from MusicBrainz and MusicKit APIs
+- `MusicModel/` — Swift package for AI commentary layer (`CommentaryService` protocol, `AppleIntelligenceService`, `Personality`, `TrackInput`)
+- `MusicContext/` — Swift package for fetching music metadata from MusicBrainz, MusicKit, and Genius APIs
 - `MusicContextGenerator/` — Standalone macOS app for testing MusicContext providers (GUI + CLI mode)
 
 **Key flow:** MusicListener detects track change via `DistributedNotificationCenter` → `AppState.handleTrackChange()` → parallel artwork fetch + commentary request (`async let`) → result saved to history → floating NSPanel notification shown → every 5 songs triggers a review.
 
 ### Services
 
-**AppleIntelligenceService** uses the `FoundationModels` framework (macOS 26+) to generate commentary. It conforms to `CommentaryService`, the protocol boundary for the AI backend.
+**AppleIntelligenceService** (in `MusicModel/`) uses the `FoundationModels` framework (macOS 26+) to generate commentary. It conforms to `CommentaryService`, the protocol boundary for the AI backend.
 
 **Notifications** are custom floating `NSPanel` windows (not system UNUserNotificationCenter), hosted with SwiftUI content and auto-dismissed after a configurable duration. This avoids system permission prompts and gives full control over styling/positioning.
 
+### MusicModel Package
+
+`MusicModel/` is a Swift package extracted from the main app containing the AI interaction layer:
+- `CommentaryService` protocol — interface for AI backends
+- `AppleIntelligenceService` — `FoundationModels` wrapper (`LanguageModelSession`)
+- `Personality` enum — single "Ficino" personality with system prompt
+- `TrackInput` — normalized track data passed to the LLM
+
 ### MusicContext Package
 
-`MusicContext/` is a standalone Swift package with two providers:
+`MusicContext/` is a standalone Swift package with three providers:
 
 - **MusicBrainzProvider** — Actor wrapping MusicBrainz REST API with rate limiting (1 req/sec). Has a multi-fallback search strategy: strips Apple Music suffixes (" - EP", " (Deluxe)"), featuring credits, collaborator names to improve match rates. Multi-stage lookup: recording → tags/genres → artist details → release group → label/format.
 - **MusicKitProvider** — Actor wrapping Apple MusicKit catalog search with smart matching (exact → fuzzy → fallback). Loads full relationships (albums, artists, composers, genres, audio variants).
+- **GeniusProvider** — Actor wrapping Genius API with rate limiting (5 req/sec). Extracts songwriting credits, producer info, song descriptions, and relationship data (samples, sampled_by, covers, interpolates).
 
-**MusicContextGenerator** can run as GUI or CLI with arguments: `-p mb|mk <Artist> <Album> <Track> [DurationMs]` or `-p mk --id <CatalogID>`.
+**MusicContextGenerator** can run as GUI or CLI: `-p mb|mk|g <Artist> <Album> <Track> [DurationMs]` or `-p mk --id <CatalogID>`.
 
 ## Xcode Project Rules
 
@@ -67,5 +77,5 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 - Single personality ("Ficino") with a detailed system prompt defined in `Personality.swift`
 - **Preferences** persist via `UserDefaults`: skip threshold, notification duration
 - Skip threshold enforcement: only generates commentary for tracks played longer than the threshold, preventing spam from rapid skipping
-- All services use **actor isolation** for thread safety (AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, RateLimiter)
+- All services use **actor isolation** for thread safety (AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, GeniusProvider, RateLimiter)
 - `AppState` and `NotificationService` are `@MainActor`-isolated for UI safety

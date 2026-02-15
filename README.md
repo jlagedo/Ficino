@@ -1,46 +1,42 @@
 # Ficino
 
-A macOS menu bar app that listens to Apple Music and delivers Claude-powered commentary on every track you play.
+A macOS menu bar app that listens to Apple Music and delivers AI-powered commentary on every track you play — powered entirely by Apple Intelligence.
 
 ## What it does
 
-When a song starts playing in Apple Music, Ficino catches the track change, sends the metadata to Claude via the CLI, and pops a native macOS notification with Claude's take on the song.
+When a song starts playing in Apple Music, Ficino catches the track change, generates a commentary via on-device Apple Intelligence, and shows a custom floating notification with its take on the song. Every five tracks, it delivers a vibe review of your recent listening.
 
-## Personalities
-
-Pick a vibe from the menu bar:
-
-| Personality | Vibe |
-|---|---|
-| Snarky Critic | Pitchfork reviewer who rates everything 6.8 |
-| Daft Punk Robot | Only speaks using words from Daft Punk lyrics |
-| Brazilian Tio | Only knows MPB, judges everything else |
-| Hype Man | Unreasonably excited about every single track |
-| Vinyl Snob | Insists the original pressing sounded better |
+Ficino is a music obsessive who lives for the story behind the song — the failed session that produced a masterpiece, the personal feud that shaped a lyric, the borrowed chord progression that changed a genre.
 
 ## Tech Stack
 
-- **Swift / SwiftUI** — menu bar popover UI
+- **Swift / SwiftUI** — menu bar UI via `MenuBarExtra` scene API
 - **DistributedNotificationCenter** — catches `com.apple.Music.playerInfo` events
-- **Claude Code CLI** (`claude -p`) — no API key needed, runs on your Claude Code subscription
-- **UserNotifications** — native macOS notifications with album art
+- **FoundationModels** (Apple Intelligence) — on-device LLM commentary, zero API keys
+- **Custom floating NSPanel** — styled notifications with album art, no system permission prompts
+- **AppleScript** — fetches album artwork directly from Music.app
+
+## Packages
+
+- **MusicModel** — Swift package for the AI commentary layer (`CommentaryService` protocol, `AppleIntelligenceService`, personality definition)
+- **MusicContext** — Swift package for fetching rich music metadata from MusicBrainz, Apple MusicKit, and Genius APIs
+- **MusicContextGenerator** — Standalone macOS app for testing metadata providers (GUI + CLI mode)
 
 ## Building
 
-Open `Ficino.xcodeproj` in Xcode and build, or run:
+Open `Ficino.xcodeproj` in Xcode and build, or from the command line:
 
 ```sh
-./build.sh
+xcodebuild -project Ficino.xcodeproj -scheme Ficino -derivedDataPath ./build build
+```
+
+To build the metadata testing tool:
+
+```sh
+xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataPath ./build build
 ```
 
 ## Requirements
 
-- macOS 14+
-- [Claude Code CLI](https://claude.ai/claude-code) installed at `/usr/local/bin/claude`
+- macOS 26+
 - Apple Music
-
-## Token Economics
-
-Zero API cost. Claude Code subscription covers all calls. The only resource burned is Claude's patience as you loop the same album for the third time.
-
-*"Third time on Discovery today. We get it, you're nostalgic."*
