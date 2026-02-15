@@ -53,6 +53,11 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 
 **MusicContextGenerator** can run as GUI or CLI with arguments: `-p mb|mk <Artist> <Album> <Track> [DurationMs]` or `-p mk --id <CatalogID>`.
 
+## Xcode Project Rules
+
+- **NEVER modify `.pbxproj` or any file inside `.xcodeproj`** — one corrupted project file wastes hours. The project uses Xcode 16+ synchronized folders (`PBXFileSystemSynchronizedRootGroup`), so creating/editing/deleting Swift files on disk is automatically picked up by Xcode.
+- For structural changes (new targets, build settings, frameworks, build phases), instruct the user to do it manually in Xcode.
+
 ## Important Details
 
 - App sandbox is **disabled** in `Ficino.entitlements` — needed for DistributedNotificationCenter and AppleScript execution

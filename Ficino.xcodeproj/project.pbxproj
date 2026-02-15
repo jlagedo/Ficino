@@ -7,50 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10001 /* FicinoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* FicinoApp.swift */; };
-		A10002 /* TrackInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* TrackInfo.swift */; };
-		A10003 /* CommentEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* CommentEntry.swift */; };
-
-		A10005 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10005 /* AppState.swift */; };
-		A10006 /* MusicListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006 /* MusicListener.swift */; };
-		A10008 /* ArtworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10008 /* ArtworkService.swift */; };
-		A10009 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10009 /* NotificationService.swift */; };
-		A10010 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10010 /* MenuBarView.swift */; };
-		A10011 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10011 /* NowPlayingView.swift */; };
-		A10012 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10012 /* HistoryView.swift */; };
-		A10014 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10014 /* SettingsView.swift */; };
-		A10015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10015 /* Assets.xcassets */; };
-
+		AE00010100000003000E0C54 /* MusicModel in Frameworks */ = {isa = PBXBuildFile; productRef = AE00010100000002000E0C54 /* MusicModel */; };
 		AE97E6982F41A97C0005F306 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = AE97E6972F41A97C0005F306 /* Secrets.xcconfig */; };
 		AE97E6992F41A97C0005F306 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = AE97E6972F41A97C0005F306 /* Secrets.xcconfig */; };
 		AECBA0C02F3ED892000EAF76 /* MusicContext in Frameworks */ = {isa = PBXBuildFile; productRef = AECBA0BF2F3ED892000EAF76 /* MusicContext */; };
 		AEF2E4012F411100009E0C54 /* MusicContext in Frameworks */ = {isa = PBXBuildFile; productRef = AEF2E4022F411100009E0C54 /* MusicContext */; };
-		AE00010100000003000E0C54 /* MusicModel in Frameworks */ = {isa = PBXBuildFile; productRef = AE00010100000002000E0C54 /* MusicModel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		AE97E6972F41A97C0005F306 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		AEF2E3E02F411050009E0C54 /* MusicContextGenerator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusicContextGenerator.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B10001 /* FicinoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FicinoApp.swift; sourceTree = "<group>"; };
-		B10002 /* TrackInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackInfo.swift; sourceTree = "<group>"; };
-		B10003 /* CommentEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentEntry.swift; sourceTree = "<group>"; };
-
-		B10005 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		B10006 /* MusicListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicListener.swift; sourceTree = "<group>"; };
-		B10008 /* ArtworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkService.swift; sourceTree = "<group>"; };
-		B10009 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
-		B10010 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
-		B10011 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
-		B10012 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
-		B10014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		B10015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B10016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B10017 /* Ficino.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Ficino.entitlements; sourceTree = "<group>"; };
-
 		C10001 /* Ficino.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ficino.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AE4B97342F42859E00D9F109 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F10001 /* Ficino */;
+		};
 		AEF2E4102F500000009E0C54 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -61,6 +38,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AE4B97262F42859E00D9F109 /* Ficino */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AE4B97342F42859E00D9F109 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Ficino; sourceTree = "<group>"; };
 		AEDE2C322F3E761B009D794D /* docs */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = docs; sourceTree = "<group>"; };
 		AEF2E3E12F411051009E0C54 /* MusicContextGenerator */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AEF2E4102F500000009E0C54 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MusicContextGenerator; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -91,55 +69,10 @@
 			children = (
 				AE97E6972F41A97C0005F306 /* Secrets.xcconfig */,
 				AEDE2C322F3E761B009D794D /* docs */,
-				E10002 /* Ficino */,
+				AE4B97262F42859E00D9F109 /* Ficino */,
 				AEF2E3E12F411051009E0C54 /* MusicContextGenerator */,
 				E10006 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		E10002 /* Ficino */ = {
-			isa = PBXGroup;
-			children = (
-				B10001 /* FicinoApp.swift */,
-				B10016 /* Info.plist */,
-				B10017 /* Ficino.entitlements */,
-				B10015 /* Assets.xcassets */,
-				E10003 /* Models */,
-				E10004 /* Services */,
-				E10005 /* Views */,
-			);
-			path = Ficino;
-			sourceTree = "<group>";
-		};
-		E10003 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				B10002 /* TrackInfo.swift */,
-				B10003 /* CommentEntry.swift */,
-				B10005 /* AppState.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
-		E10004 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				B10006 /* MusicListener.swift */,
-				B10008 /* ArtworkService.swift */,
-				B10009 /* NotificationService.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		E10005 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				B10010 /* MenuBarView.swift */,
-				B10011 /* NowPlayingView.swift */,
-				B10012 /* HistoryView.swift */,
-				B10014 /* SettingsView.swift */,
-			);
-			path = Views;
 			sourceTree = "<group>";
 		};
 		E10006 /* Products */ = {
@@ -188,6 +121,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AE4B97262F42859E00D9F109 /* Ficino */,
 			);
 			name = Ficino;
 			packageProductDependencies = (
@@ -253,7 +189,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				AE97E6982F41A97C0005F306 /* Secrets.xcconfig in Resources */,
-				A10015 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,17 +206,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10001 /* FicinoApp.swift in Sources */,
-				A10002 /* TrackInfo.swift in Sources */,
-				A10003 /* CommentEntry.swift in Sources */,
-				A10005 /* AppState.swift in Sources */,
-				A10006 /* MusicListener.swift in Sources */,
-				A10008 /* ArtworkService.swift in Sources */,
-				A10009 /* NotificationService.swift in Sources */,
-				A10010 /* MenuBarView.swift in Sources */,
-				A10011 /* NowPlayingView.swift in Sources */,
-				A10012 /* HistoryView.swift in Sources */,
-				A10014 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -573,17 +497,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		AECBA0BE2F3ED892000EAF76 /* XCLocalSwiftPackageReference "MusicContext" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = MusicContext;
-		};
 		AE00010100000001000E0C54 /* XCLocalSwiftPackageReference "MusicModel" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = MusicModel;
 		};
+		AECBA0BE2F3ED892000EAF76 /* XCLocalSwiftPackageReference "MusicContext" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = MusicContext;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		AE00010100000002000E0C54 /* MusicModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MusicModel;
+		};
 		AECBA0BF2F3ED892000EAF76 /* MusicContext */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MusicContext;
@@ -591,10 +519,6 @@
 		AEF2E4022F411100009E0C54 /* MusicContext */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MusicContext;
-		};
-		AE00010100000002000E0C54 /* MusicModel */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = MusicModel;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
