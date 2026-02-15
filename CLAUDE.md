@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is Ficino
 
-A macOS menu bar app that listens to Apple Music track changes and delivers AI-powered commentary via Claude CLI or Apple Intelligence. Runs as a menu bar utility (LSUIElement=true, no dock icon). Zero external dependencies — pure Apple frameworks.
+A macOS menu bar app that listens to Apple Music track changes and delivers AI-powered commentary via Apple Intelligence. Runs as a menu bar utility (LSUIElement=true, no dock icon). Zero external dependencies — pure Apple frameworks.
 
 ## Build & Run
 
@@ -21,7 +21,7 @@ There's a second scheme **MusicContextGenerator** for the metadata testing tool:
 xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataPath ./build build
 ```
 
-**Requirements:** macOS 14+, Claude Code CLI at `/usr/local/bin/claude`, Apple Music.
+**Requirements:** macOS 26+, Apple Music.
 
 **No test suite exists.** Testing is manual via build and run.
 
@@ -30,9 +30,9 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 **Pattern:** MVVM with a single `AppState` observable object coordinating services. Views bind to `@StateObject AppState`.
 
 **Source layout:**
-- `Ficino/Models/` — Data types and state (`AppState`, `TrackInfo`, `Personality`, `CommentEntry`, `AIEngine`)
-- `Ficino/Services/` — Business logic (`MusicListener`, `ClaudeService`, `AppleIntelligenceService`, `ArtworkService`, `NotificationService`)
-- `Ficino/Views/` — SwiftUI components (`MenuBarView`, `NowPlayingView`, `HistoryView`, `PersonalityPickerView`, `SettingsView`)
+- `Ficino/Models/` — Data types and state (`AppState`, `TrackInfo`, `Personality`, `CommentEntry`)
+- `Ficino/Services/` — Business logic (`MusicListener`, `AppleIntelligenceService`, `ArtworkService`, `NotificationService`, `CommentaryService`)
+- `Ficino/Views/` — SwiftUI components (`MenuBarView`, `NowPlayingView`, `HistoryView`, `SettingsView`)
 - `MusicContext/` — Swift package for fetching music metadata from MusicBrainz and MusicKit APIs
 - `MusicContextGenerator/` — Standalone macOS app for testing MusicContext providers (GUI + CLI mode)
 
@@ -40,9 +40,7 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 
 ### Services
 
-**ClaudeService** is a Swift `actor` that manages a persistent Claude CLI subprocess with JSON streaming over stdin/stdout. It handles process lifecycle, crash recovery (max 3 retries), stale response draining, and 30-second timeouts. Stale draining is critical — after cancelling an in-flight request, it waits up to 5s for the old JSON result before sending a new prompt to prevent delivering stale responses to new continuations.
-
-**CommentaryService** is the protocol both `ClaudeService` and `AppleIntelligenceService` conform to, allowing runtime backend swapping via `AppState.engine`. Apple Intelligence requires macOS 26+ and uses the `FoundationModels` framework.
+**AppleIntelligenceService** uses the `FoundationModels` framework (macOS 26+) to generate commentary. It conforms to `CommentaryService`, the protocol boundary for the AI backend.
 
 **Notifications** are custom floating `NSPanel` windows (not system UNUserNotificationCenter), hosted with SwiftUI content and auto-dismissed after a configurable duration. This avoids system permission prompts and gives full control over styling/positioning.
 
@@ -57,12 +55,12 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 
 ## Important Details
 
-- App sandbox is **disabled** in `Ficino.entitlements` — needed for subprocess spawning, DistributedNotificationCenter, and AppleScript execution
+- App sandbox is **disabled** in `Ficino.entitlements` — needed for DistributedNotificationCenter and AppleScript execution
 - `FicinoApp.swift` is the `@main` entry using `MenuBarExtra` scene API
 - Album artwork is fetched via AppleScript bridge to Music.app (`raw data of artwork 1 of current track`), not MusicKit
 - History is capped at 50 entries with JPEG-compressed thumbnails (48pt, 0.7 quality)
-- The 6 personality options each have detailed system prompts defined in `Personality.swift`; the "Claudy" personality enables WebSearch tool access
-- **Preferences** persist via `UserDefaults`: personality, AI engine, model name, skip threshold, notification duration
+- Single personality ("Ficino") with a detailed system prompt defined in `Personality.swift`
+- **Preferences** persist via `UserDefaults`: skip threshold, notification duration
 - Skip threshold enforcement: only generates commentary for tracks played longer than the threshold, preventing spam from rapid skipping
-- All services use **actor isolation** for thread safety (ClaudeService, AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, RateLimiter)
+- All services use **actor isolation** for thread safety (AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, RateLimiter)
 - `AppState` and `NotificationService` are `@MainActor`-isolated for UI safety

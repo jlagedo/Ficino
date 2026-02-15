@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import MusicModel
 
 @MainActor
 final class AppState: ObservableObject {
@@ -12,9 +13,6 @@ final class AppState: ObservableObject {
     @Published var history: [CommentEntry] = []
     @Published var setupError: String?
 
-    @Published var personality: Personality {
-        didSet { UserDefaults.standard.set(personality.rawValue, forKey: "personality") }
-    }
     @Published var isPaused: Bool {
         didSet { UserDefaults.standard.set(isPaused, forKey: "isPaused") }
     }
@@ -24,32 +22,15 @@ final class AppState: ObservableObject {
     @Published var notificationDuration: TimeInterval {
         didSet { UserDefaults.standard.set(notificationDuration, forKey: "notificationDuration") }
     }
-    @Published var claudeModel: String {
-        didSet { UserDefaults.standard.set(claudeModel, forKey: "claudeModel") }
-    }
-    @Published var engine: AIEngine {
-        didSet { UserDefaults.standard.set(engine.rawValue, forKey: "aiEngine") }
-    }
+
+    let personality: Personality = .ficino
 
     // MARK: - Services
     private let musicListener = MusicListener()
-    private let claudeService = ClaudeService()
     private let artworkService = ArtworkService()
     let notificationService = NotificationService()
 
     private var appleIntelligenceService: (any CommentaryService)?
-
-    private var activeService: any CommentaryService {
-        switch engine {
-        case .claude:
-            return claudeService
-        case .appleIntelligence:
-            if let service = appleIntelligenceService {
-                return service
-            }
-            return claudeService // fallback
-        }
-    }
 
     private var lastTrackID: String?
     private var trackStartTime: Date?
@@ -63,27 +44,11 @@ final class AppState: ObservableObject {
     // MARK: - Lifecycle
 
     init() {
-        // Restore persisted settings
         let defaults = UserDefaults.standard
-        if let saved = defaults.string(forKey: "personality"),
-           let p = Personality(rawValue: saved) {
-            self.personality = p
-        } else {
-            self.personality = .claudy
-        }
         self.isPaused = defaults.bool(forKey: "isPaused")
         self.skipThreshold = defaults.object(forKey: "skipThreshold") as? TimeInterval ?? 5.0
         self.notificationDuration = defaults.object(forKey: "notificationDuration") as? TimeInterval ?? 30.0
-        self.claudeModel = defaults.string(forKey: "claudeModel") ?? "claude-haiku-4-5-20251001"
 
-        if let savedEngine = defaults.string(forKey: "aiEngine"),
-           let e = AIEngine(rawValue: savedEngine) {
-            self.engine = e
-        } else {
-            self.engine = .claude
-        }
-
-        // Create Apple Intelligence service on macOS 26+
         #if canImport(FoundationModels)
         if #available(macOS 26, *) {
             self.appleIntelligenceService = AppleIntelligenceService()
@@ -102,18 +67,15 @@ final class AppState: ObservableObject {
         hasStarted = true
         NSLog("[Ficino] Starting services...")
 
-        // First-run validation: check Claude CLI is accessible (only when using Claude engine)
-        if engine == .claude {
-            Task {
-                do {
-                    try await claudeService.validateSetup()
-                    NSLog("[Ficino] Claude CLI validation passed")
-                } catch {
-                    NSLog("[Ficino] Setup validation failed: %@", error.localizedDescription)
-                    setupError = error.localizedDescription
-                }
-            }
+        #if canImport(FoundationModels)
+        if #available(macOS 26, *) {
+            // Service already initialized in init()
+        } else {
+            setupError = "Ficino requires macOS 26 or later for Apple Intelligence"
         }
+        #else
+        setupError = "Apple Intelligence is not available on this system"
+        #endif
 
         musicListener.onTrackChange = { [weak self] track, playerState in
             guard let self else { return }
@@ -128,7 +90,7 @@ final class AppState: ObservableObject {
     func stop() {
         musicListener.stop()
         commentTask?.cancel()
-        Task { await activeService.cancelCurrent() }
+        Task { await appleIntelligenceService?.cancelCurrent() }
     }
 
     // MARK: - Track Handling
@@ -169,19 +131,20 @@ final class AppState: ObservableObject {
 
         commentTask = Task {
             isLoading = true
-            let service = activeService
-            NSLog("[AppState] Fetching artwork + commentary in parallel (engine: %@)...", engine.rawValue)
 
-            // Sync model setting to Claude service when using Claude
-            if engine == .claude {
-                await claudeService.setModel(claudeModel)
+            guard let service = appleIntelligenceService else {
+                isLoading = false
+                errorMessage = "Apple Intelligence is not available"
+                return
             }
+
+            NSLog("[AppState] Fetching artwork + commentary in parallel (engine: Apple Intelligence)...")
 
             // Fetch artwork and commentary in parallel
             async let artworkResult = artworkService.fetchArtwork()
             async let commentResult: Result<String, Error> = {
                 do {
-                    let result = try await service.getCommentary(for: track, personality: personality)
+                    let result = try await service.getCommentary(for: track.asTrackInput, personality: personality)
                     return .success(result)
                 } catch {
                     return .failure(error)
@@ -201,8 +164,8 @@ final class AppState: ObservableObject {
 
             switch result {
             case .success(let comment) where comment.isEmpty:
-                NSLog("[AppState] Empty comment from %@", engine.rawValue)
-                errorMessage = "\(engine.rawValue) returned an empty response"
+                NSLog("[AppState] Empty comment from Apple Intelligence")
+                errorMessage = "Apple Intelligence returned an empty response"
 
             case .success(let comment):
                 NSLog("[AppState] Got comment (%d chars), showing notification", comment.count)
@@ -235,7 +198,6 @@ final class AppState: ObservableObject {
                 songsSinceLastReview += 1
                 if songsSinceLastReview >= 5 {
                     songsSinceLastReview = 0
-                    // Run review in its own task so it isn't cancelled by the next track change
                     reviewTask?.cancel()
                     reviewTask = Task { [personality, notificationDuration] in
                         await self.requestReview(personality: personality, notificationDuration: notificationDuration)
@@ -243,9 +205,8 @@ final class AppState: ObservableObject {
                 }
 
             case .failure(let error):
-                NSLog("[AppState] %@ error: %@", engine.rawValue, error.localizedDescription)
+                NSLog("[AppState] Apple Intelligence error: %@", error.localizedDescription)
                 if error is CancellationError {
-                    // Don't show error for intentional cancellation
                     return
                 }
                 errorMessage = error.localizedDescription
@@ -258,11 +219,14 @@ final class AppState: ObservableObject {
     private func requestReview(personality: Personality, notificationDuration: Double) async {
         guard !Task.isCancelled else { return }
 
-        let service = activeService
-        NSLog("[AppState] Requesting 5-song review (engine: %@)...", engine.rawValue)
+        guard let service = appleIntelligenceService else {
+            NSLog("[AppState] Apple Intelligence not available for review")
+            return
+        }
+
+        NSLog("[AppState] Requesting 5-song review (engine: Apple Intelligence)...")
 
         do {
-            // Fetch review and wait for song notification to finish in parallel
             async let reviewResult = service.getReview(personality: personality)
             try await Task.sleep(nanoseconds: UInt64((notificationDuration + 1) * 1_000_000_000))
 
@@ -271,7 +235,7 @@ final class AppState: ObservableObject {
             guard !Task.isCancelled else { return }
 
             if review.isEmpty {
-                NSLog("[AppState] Empty review from Claude, skipping")
+                NSLog("[AppState] Empty review, skipping")
                 return
             }
 

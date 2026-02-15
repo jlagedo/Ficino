@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import MusicModel
 
 @MainActor
 final class NotificationService {
@@ -146,10 +147,6 @@ struct FloatingNotificationView: View {
             // Text content
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Image(systemName: personality.icon)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-
                     Spacer()
 
                     if isHovering {
@@ -224,10 +221,6 @@ struct FloatingReviewNotificationView: View {
             // Text content
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Image(systemName: personality.icon)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-
                     Spacer()
 
                     if isHovering {
@@ -245,11 +238,6 @@ struct FloatingReviewNotificationView: View {
 
                 Text("5-Song Review")
                     .font(.system(.body, weight: .semibold))
-                    .lineLimit(1)
-
-                Text(personality.rawValue)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
                     .lineLimit(1)
 
                 Text(comment)

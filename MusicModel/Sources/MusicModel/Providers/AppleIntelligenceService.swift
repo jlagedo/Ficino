@@ -4,10 +4,12 @@ import Foundation
 import FoundationModels
 
 @available(macOS 26, *)
-actor AppleIntelligenceService: CommentaryService {
+public actor AppleIntelligenceService: CommentaryService {
     private var currentTask: Task<String, Error>?
 
-    func getCommentary(for track: TrackInfo, personality: Personality) async throws -> String {
+    public init() {}
+
+    public func getCommentary(for track: TrackInput, personality: Personality) async throws -> String {
         try checkAvailability()
 
         let prompt = """
@@ -25,7 +27,7 @@ actor AppleIntelligenceService: CommentaryService {
         return try await generate(prompt: prompt, personality: personality)
     }
 
-    func getReview(personality: Personality) async throws -> String {
+    public func getReview(personality: Personality) async throws -> String {
         try checkAvailability()
 
         let prompt = """
@@ -40,7 +42,7 @@ actor AppleIntelligenceService: CommentaryService {
         return try await generate(prompt: prompt, personality: personality)
     }
 
-    func cancelCurrent() {
+    public func cancelCurrent() {
         currentTask?.cancel()
         currentTask = nil
         NSLog("[AppleIntelligence] Cancelled current request")
@@ -82,10 +84,10 @@ actor AppleIntelligenceService: CommentaryService {
 }
 #endif
 
-enum AppleIntelligenceError: LocalizedError {
+public enum AppleIntelligenceError: LocalizedError, Sendable {
     case unavailable(String)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .unavailable(let msg): return msg
         }

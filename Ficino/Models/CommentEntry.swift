@@ -1,5 +1,6 @@
 import Foundation
 import AppKit
+import MusicModel
 
 struct CommentEntry: Identifiable {
     let id = UUID()

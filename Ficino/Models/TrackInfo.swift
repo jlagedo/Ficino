@@ -1,4 +1,5 @@
 import Foundation
+import MusicModel
 
 struct TrackInfo: Identifiable, Equatable {
     let id: String // PersistentID
@@ -39,5 +40,9 @@ struct TrackInfo: Identifiable, Equatable {
         let minutes = Int(totalTime) / 60
         let seconds = Int(totalTime) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    var asTrackInput: TrackInput {
+        TrackInput(name: name, artist: artist, album: album, genre: genre, durationString: durationString)
     }
 }

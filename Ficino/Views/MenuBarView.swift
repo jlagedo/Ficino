@@ -10,8 +10,7 @@ struct MenuBarView: View {
                 .padding(16)
 
             // Controls
-            HStack(spacing: 12) {
-                PersonalityPickerView()
+            HStack {
                 Spacer()
                 SettingsView()
             }

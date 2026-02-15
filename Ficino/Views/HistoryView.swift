@@ -42,15 +42,9 @@ struct HistoryEntryView: View {
                             .foregroundStyle(.yellow)
                     }
 
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("5-Song Review")
-                            .font(.system(.body, weight: .semibold))
-                            .lineLimit(1)
-                        Text(entry.personality.rawValue)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
+                    Text("5-Song Review")
+                        .font(.system(.body, weight: .semibold))
+                        .lineLimit(1)
                 } else if let track = entry.track {
                     if let thumbnail = entry.thumbnailImage {
                         Image(nsImage: thumbnail)
@@ -71,10 +65,6 @@ struct HistoryEntryView: View {
                 }
 
                 Spacer()
-
-                Image(systemName: entry.personality.icon)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
 
             Text(entry.comment)
@@ -99,7 +89,7 @@ struct HistoryEntryView: View {
         .animation(.easeOut(duration: 0.15), value: isHovered)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(entry.isReview
-            ? "5-Song Review. \(entry.personality.rawValue) said: \(entry.comment)"
-            : "\(entry.track?.name ?? "") by \(entry.track?.artist ?? ""). \(entry.personality.rawValue) said: \(entry.comment)")
+            ? "5-Song Review: \(entry.comment)"
+            : "\(entry.track?.name ?? "") by \(entry.track?.artist ?? ""): \(entry.comment)")
     }
 }
