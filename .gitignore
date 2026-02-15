@@ -13,6 +13,9 @@ DerivedData/
 # Claude Code
 .claude/
 
+# Secrets
+Secrets.xcconfig
+
 # Xcode
 *.pbxuser
 !default.pbxuser

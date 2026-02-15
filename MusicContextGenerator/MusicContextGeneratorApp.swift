@@ -63,6 +63,20 @@ private func runFromCommandLine(_ args: [String]) async {
             let song = try await provider.fetchSong(catalogID: catalogID)
             printSong(song)
             await printFullContext(song: song, provider: provider)
+
+        case .genius(let artist, let album, let track):
+            guard let token = Bundle.main.infoDictionary?["GeniusAccessToken"] as? String,
+                  !token.isEmpty, token != "your_genius_access_token_here" else {
+                print("Error: GeniusAccessToken not configured in Secrets.xcconfig")
+                exit(1)
+            }
+
+            let provider = GeniusProvider(accessToken: token)
+            print("Fetching Genius context for: \"\(track)\" by \(artist) from \"\(album)\"...")
+            print()
+
+            let context = try await provider.fetchContext(artist: artist, track: track, album: album)
+            printGeniusContext(context)
         }
 
         print("Done.")
@@ -383,6 +397,60 @@ private func printAlbumList(_ title: String, _ albums: MusicItemCollection<Album
         print("    - \(album.title)\(yearStr)")
     }
     if albums.count > 15 { print("    ... and \(albums.count - 15) more") }
+}
+
+private func printGeniusContext(_ context: MusicContextData) {
+    print("── Track (Genius) ─────────────────────────")
+    print("  Title:       \(context.track.title)")
+    if let summary = context.track.wikiSummary {
+        let text = summary.count > 500 ? String(summary.prefix(500)) + "..." : summary
+        print("  Description: \(text)")
+    }
+    print()
+
+    print("── Artist ─────────────────────────────────")
+    print("  Name:        \(context.artist.name)")
+    if let bio = context.artist.bio {
+        let text = bio.count > 500 ? String(bio.prefix(500)) + "..." : bio
+        print("  Bio:         \(text)")
+    }
+    print()
+
+    print("── Album ──────────────────────────────────")
+    print("  Title:       \(context.album.title)")
+    print()
+
+    print("── Trivia ─────────────────────────────────")
+    if !context.trivia.songwriters.isEmpty {
+        print("  Songwriters: \(context.trivia.songwriters.joined(separator: ", "))")
+    }
+    if !context.trivia.producers.isEmpty {
+        print("  Producers:   \(context.trivia.producers.joined(separator: ", "))")
+    }
+    if !context.trivia.samples.isEmpty {
+        print("  Samples:")
+        for sample in context.trivia.samples {
+            print("    - \(sample)")
+        }
+    }
+    if !context.trivia.sampledBy.isEmpty {
+        print("  Sampled By:")
+        for sample in context.trivia.sampledBy {
+            print("    - \(sample)")
+        }
+    }
+    if !context.trivia.influences.isEmpty {
+        print("  Influences:")
+        for influence in context.trivia.influences {
+            print("    - \(influence)")
+        }
+    }
+    if context.trivia.songwriters.isEmpty && context.trivia.producers.isEmpty &&
+       context.trivia.samples.isEmpty && context.trivia.sampledBy.isEmpty &&
+       context.trivia.influences.isEmpty {
+        print("  (no trivia data found)")
+    }
+    print()
 }
 
 private func printArtist(_ artist: Artist) {
