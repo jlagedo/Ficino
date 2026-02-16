@@ -4,12 +4,11 @@ Python workspace for prompt engineering, evaluation, and LoRA fine-tuning of the
 
 ## Setup
 
+Uses **uv** for package management. Always run scripts with `uv run`:
+
 ```sh
 cd ml
-python -m venv .venv && source .venv/bin/activate
-pip install -e .            # base
-pip install -e '.[eval]'    # + eval dependencies
-pip install -e '.[training]' # + training dependencies
+uv run python script.py
 ```
 
 ## Layout

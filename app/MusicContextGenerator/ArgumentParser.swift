@@ -14,11 +14,12 @@ enum ProviderArguments {
     case musicKitID(catalogID: String)
     case musicKitPlaylist(name: String)
     case genius(artist: String, album: String, track: String)
+    case contextExtract(csvPath: String)
 }
 
 /// Result of parsing command-line arguments
 struct ParsedArguments {
-    let providerType: ProviderType
+    let providerType: ProviderType?
     let arguments: ProviderArguments
 }
 
@@ -26,6 +27,17 @@ struct ParsedArguments {
 func parseArguments(_ args: [String]) throws -> ParsedArguments {
     guard args.count >= 2 else {
         throw ArgumentError.missingProviderFlag
+    }
+
+    // Context extract mode: -ce <csv_path>
+    if args[0] == "-ce" {
+        guard !args[1].isEmpty else {
+            throw ArgumentError.missingCSVPath
+        }
+        return ParsedArguments(
+            providerType: nil,
+            arguments: .contextExtract(csvPath: args[1])
+        )
     }
 
     guard args[0] == "-p" else {
@@ -137,11 +149,12 @@ enum ArgumentError: Error, CustomStringConvertible {
     case insufficientMusicKitArgs
     case insufficientGeniusArgs(provided: Int)
     case emptyArgument
+    case missingCSVPath
 
     var description: String {
         switch self {
         case .missingProviderFlag:
-            return "Missing -p flag. Usage:\n" + usageMessage
+            return "Missing -p or -ce flag. Usage:\n" + usageMessage
         case .invalidProvider(let provider):
             return "Invalid provider '\(provider)'. Valid options: mb, mk, g\n" + usageMessage
         case .insufficientMusicBrainzArgs(let provided):
@@ -152,6 +165,8 @@ enum ArgumentError: Error, CustomStringConvertible {
             return "Genius mode requires 3 arguments (Artist, Album, Track), got \(provided)\n" + usageMessage
         case .emptyArgument:
             return "Arguments cannot be empty strings"
+        case .missingCSVPath:
+            return "Context extract mode requires a CSV file path.\n" + usageMessage
         }
     }
 }
@@ -163,11 +178,17 @@ Usage:
   MusicContextGenerator -p mk --id <CatalogID>
   MusicContextGenerator -p mk --playlist <Name>
   MusicContextGenerator -p g  <Artist> <Album> <Track>
+  MusicContextGenerator -ce <csv_file>
 
 Providers:
   mb (MusicBrainz)  - Search by artist/album/track metadata
   mk (MusicKit)     - Search Apple Music catalog
   g  (Genius)       - Search Genius for songwriting credits, samples, trivia
+
+Batch:
+  -ce               - Extract MusicKit + Genius context for each track in a CSV file
+                      Input: CSV with header "artist,track,album"
+                      Output: JSON array to stdout, progress to stderr
 
 Examples:
   MusicContextGenerator -p mb "Radiohead" "OK Computer" "Let Down" 299000
@@ -176,4 +197,5 @@ Examples:
   MusicContextGenerator -p mk --playlist "Top 100: Global"
   MusicContextGenerator -p mk --playlist "Top 100: Global" > top100.csv
   MusicContextGenerator -p g  "Radiohead" "OK Computer" "Let Down"
+  MusicContextGenerator -ce ml/data/mk_top100.csv > context.json
 """

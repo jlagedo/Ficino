@@ -91,11 +91,15 @@ enum CLIRunner {
                 let context = try await provider.fetchContext(artist: artist, track: track, album: album)
                 logger.info("Genius: context fetched for \(context.track.title, privacy: .public)")
                 GeniusFormatter.printContext(context)
+
+            case .contextExtract(let csvPath):
+                try await runContextExtract(csvPath: csvPath)
             }
 
-            if case .musicKitPlaylist = parsed.arguments {
+            switch parsed.arguments {
+            case .musicKitPlaylist, .contextExtract:
                 CLIHelpers.printErr("Done.")
-            } else {
+            default:
                 print("Done.")
             }
 
@@ -121,6 +125,89 @@ enum CLIRunner {
                 }
             }
             exit(1)
+        }
+    }
+
+    private static func runContextExtract(csvPath: String) async throws {
+        logger.info("Context extract: reading CSV from \(csvPath, privacy: .public)")
+        let tracks = try CLIHelpers.parseCSV(from: csvPath)
+        guard !tracks.isEmpty else {
+            CLIHelpers.printErr("No tracks found in CSV.")
+            return
+        }
+        CLIHelpers.printErr("Loaded \(tracks.count) tracks from CSV.")
+
+        // Authorize MusicKit once
+        try await ensureAuthorized()
+        let mkProvider = MusicKitProvider()
+
+        // Check Genius token once
+        let geniusToken = Bundle.main.infoDictionary?["GeniusAccessToken"] as? String
+        let hasGenius = geniusToken != nil && !geniusToken!.isEmpty && geniusToken! != "your_genius_access_token_here"
+        if !hasGenius {
+            CLIHelpers.printErr("Warning: GeniusAccessToken not configured — Genius data will be skipped.")
+        }
+        let geniusProvider = hasGenius ? GeniusProvider(accessToken: geniusToken!) : nil
+
+        for (index, row) in tracks.enumerated() {
+            CLIHelpers.printErr("[\(index + 1)/\(tracks.count)] \(row.track) — \(row.artist)")
+
+            // Fetch MusicKit data
+            var mkJSON: MusicKitJSON? = nil
+            do {
+                let song = try await mkProvider.searchSong(artist: row.artist, track: row.track, album: row.album)
+                let songJSON = MusicKitSongJSON.from(song)
+
+                var albumJSON: MusicKitAlbumJSON? = nil
+                if let albumID = song.albums?.first?.id {
+                    do {
+                        let album = try await mkProvider.fetchAlbum(id: albumID)
+                        albumJSON = MusicKitAlbumJSON.from(album)
+                    } catch {
+                        CLIHelpers.printErr("  MusicKit album error: \(error)")
+                    }
+                }
+
+                var artistJSON: MusicKitArtistJSON? = nil
+                if let artistID = song.artists?.first?.id {
+                    do {
+                        let artist = try await mkProvider.fetchArtist(id: artistID)
+                        artistJSON = MusicKitArtistJSON.from(artist)
+                    } catch {
+                        CLIHelpers.printErr("  MusicKit artist error: \(error)")
+                    }
+                }
+
+                mkJSON = MusicKitJSON(song: songJSON, album: albumJSON, artist: artistJSON)
+            } catch {
+                CLIHelpers.printErr("  MusicKit error: \(error)")
+            }
+
+            // Fetch Genius data
+            var geniusData: MusicContextData? = nil
+            if let gProvider = geniusProvider {
+                do {
+                    geniusData = try await gProvider.fetchContext(
+                        artist: row.artist, track: row.track, album: row.album
+                    )
+                } catch {
+                    CLIHelpers.printErr("  Genius error: \(error)")
+                }
+            }
+
+            let entry = ContextExtractEntry(
+                artist: row.artist,
+                track: row.track,
+                album: row.album,
+                musickit: mkJSON,
+                genius: geniusData
+            )
+
+            // Stream as JSONL — one compact JSON object per line
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys]
+            let jsonData = try encoder.encode(entry)
+            print(String(data: jsonData, encoding: .utf8)!)
         }
     }
 

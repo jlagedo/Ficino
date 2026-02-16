@@ -16,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AE3B67742F43B0DB0052E8B2 /* FMPromptRunner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FMPromptRunner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AE97E6972F41A97C0005F306 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		AEF2E3E02F411050009E0C54 /* MusicContextGenerator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MusicContextGenerator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C10001 /* Ficino.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ficino.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -39,11 +40,19 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AE3B67752F43B0DB0052E8B2 /* FMPromptRunner */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = FMPromptRunner; sourceTree = "<group>"; };
 		AE4B97262F42859E00D9F109 /* Ficino */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AE4B97342F42859E00D9F109 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Ficino; sourceTree = "<group>"; };
 		AEF2E3E12F411051009E0C54 /* MusicContextGenerator */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (AEF2E4102F500000009E0C54 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = MusicContextGenerator; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AE3B67712F43B0DB0052E8B2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AEF2E3DD2F411050009E0C54 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -71,6 +80,7 @@
 				AE97E6972F41A97C0005F306 /* Secrets.xcconfig */,
 				AE4B97262F42859E00D9F109 /* Ficino */,
 				AEF2E3E12F411051009E0C54 /* MusicContextGenerator */,
+				AE3B67752F43B0DB0052E8B2 /* FMPromptRunner */,
 				E10006 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -80,6 +90,7 @@
 			children = (
 				C10001 /* Ficino.app */,
 				AEF2E3E02F411050009E0C54 /* MusicContextGenerator.app */,
+				AE3B67742F43B0DB0052E8B2 /* FMPromptRunner.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,6 +98,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AE3B67732F43B0DB0052E8B2 /* FMPromptRunner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE3B677C2F43B0DC0052E8B2 /* Build configuration list for PBXNativeTarget "FMPromptRunner" */;
+			buildPhases = (
+				AE3B67702F43B0DB0052E8B2 /* Sources */,
+				AE3B67712F43B0DB0052E8B2 /* Frameworks */,
+				AE3B67722F43B0DB0052E8B2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AE3B67752F43B0DB0052E8B2 /* FMPromptRunner */,
+			);
+			name = FMPromptRunner;
+			packageProductDependencies = (
+			);
+			productName = FMPromptRunner;
+			productReference = AE3B67742F43B0DB0052E8B2 /* FMPromptRunner.app */;
+			productType = "com.apple.product-type.application";
+		};
 		AEF2E3DF2F411050009E0C54 /* MusicContextGenerator */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = AEF2E3E82F411051009E0C54 /* Build configuration list for PBXNativeTarget "MusicContextGenerator" */;
@@ -145,6 +178,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					AE3B67732F43B0DB0052E8B2 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					AEF2E3DF2F411050009E0C54 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -173,11 +209,19 @@
 			targets = (
 				F10001 /* Ficino */,
 				AEF2E3DF2F411050009E0C54 /* MusicContextGenerator */,
+				AE3B67732F43B0DB0052E8B2 /* FMPromptRunner */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AE3B67722F43B0DB0052E8B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AEF2E3DE2F411050009E0C54 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -197,6 +241,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AE3B67702F43B0DB0052E8B2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AEF2E3DC2F411050009E0C54 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -214,6 +265,98 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		AE3B677D2F43B0DC0052E8B2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				AUTOMATION_APPLE_EVENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VPS2J2F4X3;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ficino.music-context-generator.FMPromptRunner";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AE3B677E2F43B0DC0052E8B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				AUTOMATION_APPLE_EVENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VPS2J2F4X3;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ficino.music-context-generator.FMPromptRunner";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		AEF2E3E92F411051009E0C54 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = AE97E6972F41A97C0005F306 /* Secrets.xcconfig */;
@@ -491,6 +634,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AE3B677C2F43B0DC0052E8B2 /* Build configuration list for PBXNativeTarget "FMPromptRunner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE3B677D2F43B0DC0052E8B2 /* Debug */,
+				AE3B677E2F43B0DC0052E8B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AEF2E3E82F411051009E0C54 /* Build configuration list for PBXNativeTarget "MusicContextGenerator" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
