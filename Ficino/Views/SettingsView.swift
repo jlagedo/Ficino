@@ -43,7 +43,7 @@ struct SettingsView: View {
                                 in: 3...30,
                                 step: 1
                             )
-                            .frame(width: 120)
+                            .frame(width: 150)
                             .accessibilityLabel("Notification duration")
                             .accessibilityValue("\(Int(appState.notificationDuration)) seconds")
                             .accessibilityHint("How long the floating comment stays on screen")
@@ -73,7 +73,7 @@ struct SettingsView: View {
                                 in: 0...30,
                                 step: 1
                             )
-                            .frame(width: 120)
+                            .frame(width: 150)
                             .accessibilityLabel("Skip threshold")
                             .accessibilityValue("\(Int(appState.skipThreshold)) seconds")
                             .accessibilityHint("Tracks played less than this duration are ignored")
@@ -89,21 +89,9 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Divider()
-
-                    Button {
-                        appState.stop()
-                        NSApplication.shared.terminate(nil)
-                    } label: {
-                        Text("Quit Ficino")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .buttonStyle(.plain)
                 }
                 .padding(12)
-                .frame(width: 220)
+                .frame(width: 250)
             }
         }
     }

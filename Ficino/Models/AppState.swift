@@ -49,7 +49,14 @@ final class AppState: ObservableObject {
 
         #if canImport(FoundationModels)
         if #available(macOS 26, *) {
-            self.ficinoCore = FicinoCore(commentaryService: AppleIntelligenceService())
+            let geniusToken = Self.geniusAccessToken()
+            if geniusToken != nil {
+                NSLog("[Ficino] Genius API token found, Genius context enabled")
+            }
+            self.ficinoCore = FicinoCore(
+                commentaryService: AppleIntelligenceService(),
+                geniusAccessToken: geniusToken
+            )
         }
         #endif
 
@@ -204,6 +211,15 @@ final class AppState: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    private static func geniusAccessToken() -> String? {
+        guard let token = Bundle.main.infoDictionary?["GeniusAccessToken"] as? String,
+              !token.isEmpty,
+              !token.hasPrefix("$(") else {
+            return nil
+        }
+        return token
+    }
 
     private nonisolated func loadImage(from url: URL?) async -> NSImage? {
         guard let url else { return nil }

@@ -1,16 +1,34 @@
 import Foundation
 import MusicKit
 import MusicModel
+import MusicContext
 
 struct PromptBuilder {
 
-    /// Build a TrackInput from a TrackRequest, enriched with MusicKit metadata when available.
-    static func buildTrackInput(from request: TrackRequest, song: Song?) -> TrackInput {
+    /// Build a TrackInput from a TrackRequest, enriched with MusicKit and Genius metadata when available.
+    static func buildTrackInput(from request: TrackRequest, song: Song?, geniusData: MusicContextData? = nil) -> TrackInput {
         let minutes = request.durationMs / 60_000
         let seconds = (request.durationMs % 60_000) / 1000
         let durationString = String(format: "%d:%02d", minutes, seconds)
 
-        let context = song.flatMap { buildContext(from: $0) }
+        let musicKitContext = song.flatMap { buildContext(from: $0) }
+        let geniusContext = geniusData.flatMap { buildGeniusContext(from: $0) }
+
+        NSLog("[PromptBuilder] MusicKit context: %@, Genius context: %@",
+              musicKitContext != nil ? "\(musicKitContext!.count) chars" : "none",
+              geniusContext != nil ? "\(geniusContext!.count) chars" : "none")
+
+        // Merge context sections
+        let context: String? = switch (musicKitContext, geniusContext) {
+        case let (.some(mk), .some(g)): mk + "\n" + g
+        case let (.some(mk), .none): mk
+        case let (.none, .some(g)): g
+        case (.none, .none): nil
+        }
+
+        if let context {
+            NSLog("[PromptBuilder] Final context (%d chars):\n%@", context.count, context)
+        }
 
         return TrackInput(
             name: request.name,
@@ -26,15 +44,18 @@ struct PromptBuilder {
     private static func buildContext(from song: Song) -> String? {
         var parts: [String] = []
 
-        // Genre names (direct property, no relationship needed)
-        if !song.genreNames.isEmpty {
-            parts.append("Genres: \(song.genreNames.joined(separator: ", "))")
-        }
-
-        // Composers (relationship)
-        if let composers = song.composers, !composers.isEmpty {
-            let names = composers.map(\.name)
-            parts.append("Composers: \(names.joined(separator: ", "))")
+        // Primary genres — one level below the "Music" root in MusicKit's genre tree
+        if let genres = song.genres, !genres.isEmpty {
+            let primary = genres
+                .filter { $0.parent != nil && $0.parent?.parent == nil }
+                .map(\.name)
+            if !primary.isEmpty {
+                parts.append("Genres: \(primary.joined(separator: ", "))")
+            }
+        } else if !song.genreNames.isEmpty {
+            if let first = song.genreNames.first, first != "Music" {
+                parts.append("Genre: \(first)")
+            }
         }
 
         // Release date (direct property on Song)
@@ -42,28 +63,6 @@ struct PromptBuilder {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy-MM-dd"
             parts.append("Release date: \(formatter.string(from: releaseDate))")
-        }
-
-        // Disc and track number
-        if let disc = song.discNumber, let track = song.trackNumber {
-            parts.append("Disc \(disc), track \(track)")
-        } else if let track = song.trackNumber {
-            parts.append("Track number: \(track)")
-        }
-
-        // ISRC
-        if let isrc = song.isrc {
-            parts.append("ISRC: \(isrc)")
-        }
-
-        // Content rating
-        if let rating = song.contentRating {
-            parts.append("Content rating: \(rating)")
-        }
-
-        // Classical work name
-        if let workName = song.workName {
-            parts.append("Work: \(workName)")
         }
 
         // Editorial notes (Apple Music editorial descriptions — very rich context)
@@ -75,72 +74,24 @@ struct PromptBuilder {
             }
         }
 
-        // Audio variants (Dolby Atmos, Lossless, Hi-Res, etc.)
-        if let variants = song.audioVariants, !variants.isEmpty {
-            let names = variants.map { String(describing: $0) }
-            parts.append("Audio formats: \(names.joined(separator: ", "))")
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: "\n")
+    }
+
+    /// Extract high-value Genius metadata into a context string for the LLM.
+    private static func buildGeniusContext(from data: MusicContextData) -> String? {
+        var parts: [String] = []
+
+        if !data.trivia.samples.isEmpty {
+            parts.append("Samples: \(data.trivia.samples.joined(separator: "; "))")
         }
 
-        // Album details (from relationship)
-        if let albums = song.albums, let album = albums.first {
-            parts.append("Album: \(album.title)")
-
-            if let albumNotes = album.editorialNotes {
-                if let standard = albumNotes.standard, !standard.isEmpty {
-                    parts.append("Album editorial notes: \(stripHTML(standard))")
-                } else if let short = albumNotes.short, !short.isEmpty {
-                    parts.append("Album editorial notes: \(stripHTML(short))")
-                }
-            }
-
-            if let labels = album.recordLabels, !labels.isEmpty {
-                let names = labels.map(\.name)
-                parts.append("Label: \(names.joined(separator: ", "))")
-            }
-
-            if album.trackCount > 0 {
-                parts.append("Album track count: \(album.trackCount)")
-            }
-
-            if let albumReleaseDate = album.releaseDate {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                parts.append("Album release date: \(formatter.string(from: albumReleaseDate))")
-            }
-        }
-
-        // Artist details (from relationship)
-        if let artists = song.artists, !artists.isEmpty {
-            // All credited artists
-            if artists.count > 1 {
-                let names = artists.map(\.name)
-                parts.append("All artists: \(names.joined(separator: ", "))")
-            }
-
-            if let artist = artists.first {
-                // Artist genres
-                if let artistGenres = artist.genres, !artistGenres.isEmpty {
-                    let names = artistGenres.map(\.name)
-                    parts.append("Artist genres: \(names.joined(separator: ", "))")
-                }
-
-                // Top songs — gives the LLM a sense of the artist's catalogue
-                if let topSongs = artist.topSongs, !topSongs.isEmpty {
-                    let titles = topSongs.prefix(5).map(\.title)
-                    parts.append("Artist's top songs: \(titles.joined(separator: ", "))")
-                }
-
-                // Similar artists
-                if let similar = artist.similarArtists, !similar.isEmpty {
-                    let names = similar.prefix(5).map(\.name)
-                    parts.append("Similar artists: \(names.joined(separator: ", "))")
-                }
-
-                // Latest release
-                if let latest = artist.latestRelease {
-                    parts.append("Artist's latest release: \(latest.title)")
-                }
-            }
+        if let description = data.track.wikiSummary {
+            // Truncate long descriptions — shorter keeps the model focused on specifics
+            let truncated = description.count > 250
+                ? String(description.prefix(250)) + "..."
+                : description
+            parts.append("Song description: \(truncated)")
         }
 
         guard !parts.isEmpty else { return nil }

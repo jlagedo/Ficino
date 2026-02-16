@@ -32,12 +32,22 @@ struct HistoryEntryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                if let thumbnail = entry.thumbnailImage {
-                    Image(nsImage: thumbnail)
-                        .resizable()
-                        .frame(width: 24, height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                Group {
+                    if let thumbnail = entry.thumbnailImage {
+                        Image(nsImage: thumbnail)
+                            .resizable()
+                    } else {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(.quaternary)
+                            Image(systemName: "music.note")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
+                .frame(width: 24, height: 24)
+                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(entry.track.name)
@@ -50,10 +60,15 @@ struct HistoryEntryView: View {
                 }
 
                 Spacer()
+
+                Text(entry.timestamp, style: .relative)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .monospacedDigit()
             }
 
             Text(entry.comment)
-                .font(.system(.callout, design: .rounded))
+                .font(.callout)
                 .foregroundStyle(.primary)
                 .lineLimit(5)
         }

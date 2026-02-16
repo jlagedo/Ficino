@@ -9,8 +9,21 @@ struct MenuBarView: View {
             NowPlayingView()
                 .padding(16)
 
+            Divider()
+
             // Controls
             HStack {
+                Button {
+                    appState.stop()
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    Text("Quit Ficino")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("q")
+
                 Spacer()
                 SettingsView()
             }
@@ -22,7 +35,6 @@ struct MenuBarView: View {
             // History
             HistoryView()
         }
-        .background(.ultraThinMaterial)
         .task {
             appState.startIfNeeded()
         }

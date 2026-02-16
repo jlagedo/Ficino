@@ -27,7 +27,7 @@ struct NowPlayingView: View {
                             .resizable()
                     } else {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(.quaternary)
                             Image(systemName: "music.note")
                                 .font(.title2)
@@ -36,7 +36,7 @@ struct NowPlayingView: View {
                     }
                 }
                 .frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .accessibilityLabel("Album artwork for \(track.album)")
 
                 // Track info + comment
@@ -66,7 +66,7 @@ struct NowPlayingView: View {
                         } else if let comment = appState.currentComment {
                             ScrollView {
                                 Text(comment)
-                                    .font(.system(.callout, design: .rounded))
+                                    .font(.callout)
                                     .foregroundStyle(.primary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }

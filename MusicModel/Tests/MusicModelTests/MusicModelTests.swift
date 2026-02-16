@@ -23,7 +23,7 @@ import Testing
         #expect(p.rawValue == "Ficino")
         #expect(p.id == "Ficino")
         #expect(p.icon == "book.fill")
-        #expect(!p.systemPrompt.isEmpty)
+        #expect(!p.instructions.isEmpty)
     }
 
     @Test func allCasesContainsFicino() {

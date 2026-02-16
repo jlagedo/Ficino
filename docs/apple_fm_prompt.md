@@ -87,7 +87,8 @@ React to this track IN CHARACTER. 2-3 sentences only. No disclaimers.
 - **Redundant length control** — "2-3 sentences" appears in both instructions AND prompt. Once in instructions is enough.
 - **"Your character: Ficino"** — label without context; the model doesn't know what "Ficino" means unless the system prompt follows. Redundant with the system prompt itself.
 - **Duration field** — adds tokens with no value. Duration doesn't help the model generate interesting commentary.
-- **Genre field** — low value for commentary now, but will be important during LoRA adapter training. Keep in `TrackInput`, exclude from prompt for now.
+- **Genre field** — included in prompt for LoRA adapter training anchor. Genre will shape personality at the model weights level via adapter selection.
+- **No MusicKit context** — the prompt was written before FicinoCore existed. Now we have rich metadata (composers, editorial notes, release date, similar artists) that should feed the prompt.
 - **"No disclaimers"** — good, but "NEVER" is stronger per Apple's guidance.
 - **"React to this track IN CHARACTER"** — redundant if the instructions already define character.
 - **No few-shot example** — the model has no demonstration of what good output looks like.
@@ -124,10 +125,11 @@ can take to a dinner party. 2-3 sentences. Sound like a friend leaning over to w
 ### 5.1 Design Principles
 
 1. **Instructions own the persona** — personality, tone, rules, and prohibitions go in session instructions (static, developer-controlled, highest precedence)
-2. **Prompts own the task** — track info and the specific request go in the prompt (dynamic, minimal)
+2. **Prompts own the task** — track info, MusicKit context, and the specific request go in the prompt (dynamic, minimal)
 3. **One few-shot example** — demonstrates tone and length concretely
 4. **Emphatic prohibitions** — caps for `NEVER`, `DO NOT`, `MUST`
 5. **No redundancy** — say it once, in the right place
+6. **MusicKit context as grounding** — feed the model real facts (composers, editorial notes, release date, similar artists) so it has material to riff on instead of pure hallucination
 
 ### 5.2 Proposed Instructions (Static, Session-Level)
 
@@ -159,13 +161,44 @@ in one take and they kept it because it sounded unhinged enough."
 ### 5.3 Proposed Commentary Prompt (Dynamic, Per-Track)
 
 ```
-"\(track.name)" by \(track.artist), from "\(track.album)".
+"\(track.name)" by \(track.artist), from "\(track.album)" (\(genre)).
+
+\(context)
+
 React.
 ```
 
-**Token estimate: ~20–30 tokens**
+The `context` block is built by `PromptBuilder` from MusicKit data. Only high-storytelling-value fields are included:
 
-That's it. The instructions already define who Ficino is, what tone to use, what length, what to avoid. The prompt just provides the track and says go.
+| Field | Source | Why |
+|-------|--------|-----|
+| **Composers** | `song.composers` | "Did you know X wrote this?" — peak Ficino |
+| **Editorial notes** (song) | `song.editorialNotes` | Apple editors write rich narrative context, exactly what Ficino riffs on |
+| **Editorial notes** (album) | `album.editorialNotes` | Album-level story, era context |
+| **Release date** | `song.releaseDate` | Historical placement |
+| **Similar artists** | `artist.similarArtists` | Lets Ficino draw connections |
+| **Genre** | `song.genreNames` | Always present — anchors future LoRA adapter selection |
+
+**Excluded fields** (noise, no storytelling value): ISRC, disc/track number, audio formats, content rating, album track count, album release date (redundant), artist genres (redundant), artist top songs (model already knows for popular artists), latest release.
+
+**Token estimate: ~50–200 tokens** (varies by how much MusicKit returns; editorial notes are the heaviest)
+
+MusicKit failures are non-fatal — if the lookup fails, the prompt degrades to just the track line + "React." and Ficino falls back to its own knowledge.
+
+**Example with context:**
+
+```
+"Remember the Time" by Michael Jackson, from "Dangerous" (Pop).
+
+Composers: Michael Jackson, Teddy Riley
+Release date: 1991-11-25
+Editorial notes: Somewhere between the polished, eager-to-please Bad and
+the sessions for Dangerous, Michael Jackson apparently rediscovered his love
+for the gritty tracks of James Brown and Sly Stone...
+Similar artists: Janet Jackson, Prince, Whitney Houston, Stevie Wonder, The Weeknd
+
+React.
+```
 
 ### 5.4 Total Token Budget (Proposed)
 
@@ -174,11 +207,11 @@ That's it. The instructions already define who Ficino is, what tone to use, what
 | Component | Current (est.) | Proposed (est.) |
 |-----------|---------------|-----------------|
 | Instructions | ~50 tokens | ~150 tokens |
-| Prompt | ~120 tokens | ~25 tokens |
+| Prompt (track + context) | ~120 tokens | ~100–250 tokens |
 | Output | ~150 tokens | ~150 tokens |
-| **Total** | **~320 tokens** | **~325 tokens** |
+| **Total** | **~320 tokens** | **~400–550 tokens** |
 
-Similar total, but the weight shifts from prompt to instructions. The instructions are richer (persona + example), the prompt is leaner (just the track).
+More tokens than before, but they're real facts from MusicKit instead of redundant instructions. The model gets grounded context to riff on. Still well under the 16K window — this is ~3% of capacity.
 
 ---
 
@@ -191,7 +224,8 @@ Similar total, but the weight shifts from prompt to instructions. The instructio
 | Prohibitions | Lowercase "never" | Caps `NEVER`, `DO NOT` | Apple: emphatic commands are more effective |
 | Prompt content | Persona + track + rules + length | Track only + "React." | Single task, no redundancy |
 | Duration field | Included | Removed | No value for commentary generation |
-| Genre field | Included | Excluded from prompt (kept in `TrackInput` for future LoRA training) | Low value for prompting now; important for adapter training later |
+| Genre field | From notification only | MusicKit genres (always included) | Anchors future LoRA adapter selection |
+| MusicKit context | None | Composers, editorial notes, release date, similar artists | Real facts for the model to riff on instead of pure hallucination |
 | Length control | In both instructions and prompt | Instructions only | Say it once |
 
 ---
@@ -200,7 +234,7 @@ Similar total, but the weight shifts from prompt to instructions. The instructio
 
 1. **Few-shot example choice** — should it be a well-known track (model can validate) or obscure (less hallucination risk)? A well-known track lets the model see a correct example; an obscure one might cause it to pattern-match the fabrication style.
 
-2. **Genre → LoRA tone mapping** — genre is excluded from the prompt but kept in `TrackInput` as the key for adapter selection. Future plan: train LoRA adapters that map genre to persona tone (e.g., Ficino reacts reverently to jazz, abrasively to punk, atmospherically to ambient). The genre shapes the personality at the model weights level, not the prompt level.
+2. **Genre → LoRA tone mapping** — genre is always included in the prompt and in `TrackInput` as the anchor for adapter selection. Future plan: train LoRA adapters that map genre to persona tone (e.g., Ficino reacts reverently to jazz, abrasively to punk, atmospherically to ambient). The genre shapes the personality at the model weights level in addition to the prompt level.
 
 3. **Temperature** — Ficino's personality benefits from variance. A temperature of 1.0–1.5 may produce more entertaining output than the default. Worth testing.
 

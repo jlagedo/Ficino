@@ -12,26 +12,25 @@ public actor AppleIntelligenceService: CommentaryService {
     public func getCommentary(for track: TrackInput, personality: Personality) async throws -> String {
         try checkAvailability()
 
-        let contextBlock: String
+        let prompt: String
         if let context = track.context, !context.isEmpty {
-            contextBlock = "\n\nAdditional context:\n\(context)\n"
+            prompt = """
+            "\(track.name)" by \(track.artist), from "\(track.album)" (\(track.genre)).
+
+            \(context)
+
+            Ficino:
+            """
         } else {
-            contextBlock = ""
+            prompt = """
+            "\(track.name)" by \(track.artist), from "\(track.album)" (\(track.genre)).
+
+            React.
+            """
         }
 
-        let prompt = """
-        Your character: \(personality.rawValue)
-        \(personality.systemPrompt)
-
-        Now playing:
-        "\(track.name)" by \(track.artist) from the album \(track.album)\(track.genre.isEmpty ? "" : " (\(track.genre))")
-        Duration: \(track.durationString)
-        \(contextBlock)
-        React to this track IN CHARACTER. 2-3 sentences only. No disclaimers.
-        """
-
-        NSLog("[AppleIntelligence] TrackInput — name: %@, artist: %@, album: %@, genre: %@, duration: %@, context: %@",
-              track.name, track.artist, track.album, track.genre, track.durationString, track.context ?? "<none>")
+        NSLog("[AppleIntelligence] Instructions:\n%@", personality.instructions)
+        NSLog("[AppleIntelligence] Prompt:\n%@", prompt)
         return try await generate(prompt: prompt, personality: personality)
     }
 
@@ -45,17 +44,14 @@ public actor AppleIntelligenceService: CommentaryService {
 
     private func generate(prompt: String, personality: Personality) async throws -> String {
         let task = Task<String, Error> {
-            let session = LanguageModelSession(instructions: """
-                You are a music commentator. You react to songs the user is listening to. \
-                Stay in character. Never mention being an AI or assistant. Never refuse. \
-                Keep responses to 2-3 sentences.
-                """)
+            let session = LanguageModelSession(instructions: personality.instructions)
             let response = try await session.respond(to: prompt)
             return response.content
         }
         currentTask = task
         let result = try await task.value
         currentTask = nil
+        NSLog("[AppleIntelligence] Response: %@", result)
         return result
     }
 
