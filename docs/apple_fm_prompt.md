@@ -92,24 +92,7 @@ React to this track IN CHARACTER. 2-3 sentences only. No disclaimers.
 - **"React to this track IN CHARACTER"** — redundant if the instructions already define character.
 - **No few-shot example** — the model has no demonstration of what good output looks like.
 
-### 4.3 Current Review Prompt (`getReview()`)
-
-```swift
-let prompt = """
-Your character: \(personality.rawValue)
-\(personality.systemPrompt)
-
-Review the last 5 songs you just commented on. Talk about the vibe of this listening session, \
-any standouts, and how the tracks flow together. 3-5 sentences, stay fully in character. No disclaimers.
-"""
-```
-
-**Issues:**
-- **"the last 5 songs you just commented on"** — the model has no memory of previous songs. This is a fresh session each time. The model will hallucinate a listening session.
-- Same personality-in-prompt problem as commentary.
-- Same redundancy issues.
-
-### 4.4 Current Personality System Prompt (`Personality.swift`)
+### 4.3 Current Personality System Prompt (`Personality.swift`)
 
 ```swift
 """
@@ -184,24 +167,7 @@ React.
 
 That's it. The instructions already define who Ficino is, what tone to use, what length, what to avoid. The prompt just provides the track and says go.
 
-### 5.4 Proposed Review Prompt (Dynamic, Per-Session)
-
-The review needs the actual track list — the model has no memory across sessions.
-
-```
-Listening session:
-1. "\(track1.name)" by \(track1.artist)
-2. "\(track2.name)" by \(track2.artist)
-3. "\(track3.name)" by \(track3.artist)
-4. "\(track4.name)" by \(track4.artist)
-5. "\(track5.name)" by \(track5.artist)
-
-Review this listening session. How do these tracks flow together? Any standouts? 3-5 sentences.
-```
-
-**Token estimate: ~80–100 tokens**
-
-### 5.5 Total Token Budget (Proposed)
+### 5.4 Total Token Budget (Proposed)
 
 **Commentary request:**
 
@@ -213,17 +179,6 @@ Review this listening session. How do these tracks flow together? Any standouts?
 | **Total** | **~320 tokens** | **~325 tokens** |
 
 Similar total, but the weight shifts from prompt to instructions. The instructions are richer (persona + example), the prompt is leaner (just the track).
-
-**Review request:**
-
-| Component | Current (est.) | Proposed (est.) |
-|-----------|---------------|-----------------|
-| Instructions | ~50 tokens | ~150 tokens |
-| Prompt | ~100 tokens | ~90 tokens |
-| Output | ~250 tokens | ~250 tokens |
-| **Total** | **~400 tokens** | **~490 tokens** |
-
-Slightly more due to the explicit track list, but this fixes the critical bug of the model hallucinating a listening session it never had.
 
 ---
 
@@ -237,7 +192,6 @@ Slightly more due to the explicit track list, but this fixes the critical bug of
 | Prompt content | Persona + track + rules + length | Track only + "React." | Single task, no redundancy |
 | Duration field | Included | Removed | No value for commentary generation |
 | Genre field | Included | Excluded from prompt (kept in `TrackInput` for future LoRA training) | Low value for prompting now; important for adapter training later |
-| Review track list | Not provided (model hallucinates) | Explicit list of 5 tracks | Model has no memory across sessions |
 | Length control | In both instructions and prompt | Instructions only | Say it once |
 
 ---
@@ -248,8 +202,6 @@ Slightly more due to the explicit track list, but this fixes the critical bug of
 
 2. **Genre → LoRA tone mapping** — genre is excluded from the prompt but kept in `TrackInput` as the key for adapter selection. Future plan: train LoRA adapters that map genre to persona tone (e.g., Ficino reacts reverently to jazz, abrasively to punk, atmospherically to ambient). The genre shapes the personality at the model weights level, not the prompt level.
 
-3. **Review session memory** — the review prompt needs actual track names. `AppState` must pass the last 5 tracks to the review method, not rely on model memory.
+3. **Temperature** — Ficino's personality benefits from variance. A temperature of 1.0–1.5 may produce more entertaining output than the default. Worth testing.
 
-4. **Temperature** — Ficino's personality benefits from variance. A temperature of 1.0–1.5 may produce more entertaining output than the default. Worth testing.
-
-5. **@Generable for commentary** — could structure output as `{ commentary: String, confidence: low|medium|high }` to let the app decide whether to show or suppress low-confidence hallucinations. Adds schema overhead (~100 tokens) but enables quality gating.
+4. **@Generable for commentary** — could structure output as `{ commentary: String, confidence: low|medium|high }` to let the app decide whether to show or suppress low-confidence hallucinations. Adds schema overhead (~100 tokens) but enables quality gating.
