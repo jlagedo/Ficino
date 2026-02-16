@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import MusicModel
+import FicinoCore
 
 @MainActor
 final class AppState: ObservableObject {
@@ -27,10 +28,9 @@ final class AppState: ObservableObject {
 
     // MARK: - Services
     private let musicListener = MusicListener()
-    private let artworkService = ArtworkService()
     let notificationService = NotificationService()
 
-    private var appleIntelligenceService: (any CommentaryService)?
+    private var ficinoCore: FicinoCore?
 
     private var lastTrackID: String?
     private var trackStartTime: Date?
@@ -49,7 +49,7 @@ final class AppState: ObservableObject {
 
         #if canImport(FoundationModels)
         if #available(macOS 26, *) {
-            self.appleIntelligenceService = AppleIntelligenceService()
+            self.ficinoCore = FicinoCore(commentaryService: AppleIntelligenceService())
         }
         #endif
 
@@ -67,7 +67,10 @@ final class AppState: ObservableObject {
 
         #if canImport(FoundationModels)
         if #available(macOS 26, *) {
-            // Service already initialized in init()
+            Task {
+                let status = await FicinoCore.requestMusicKitAuthorization()
+                NSLog("[Ficino] MusicKit authorization: %@", String(describing: status))
+            }
         } else {
             setupError = "Ficino requires macOS 26 or later for Apple Intelligence"
         }
@@ -88,7 +91,7 @@ final class AppState: ObservableObject {
     func stop() {
         musicListener.stop()
         commentTask?.cancel()
-        Task { await appleIntelligenceService?.cancelCurrent() }
+        Task { await ficinoCore?.cancel() }
     }
 
     // MARK: - Track Handling
@@ -130,49 +133,45 @@ final class AppState: ObservableObject {
         commentTask = Task {
             isLoading = true
 
-            guard let service = appleIntelligenceService else {
+            guard let core = ficinoCore else {
                 isLoading = false
                 errorMessage = "Apple Intelligence is not available"
                 return
             }
 
-            NSLog("[AppState] Fetching artwork + commentary in parallel (engine: Apple Intelligence)...")
+            NSLog("[AppState] Processing track via FicinoCore...")
 
-            // Fetch artwork and commentary in parallel
-            async let artworkResult = artworkService.fetchArtwork()
-            async let commentResult: Result<String, Error> = {
-                do {
-                    let result = try await service.getCommentary(for: track.asTrackInput, personality: personality)
-                    return .success(result)
-                } catch {
-                    return .failure(error)
+            do {
+                let result = try await core.process(track.asTrackRequest, personality: personality)
+
+                guard !Task.isCancelled else {
+                    NSLog("[AppState] Task cancelled (track changed before response)")
+                    return
                 }
-            }()
 
-            let artwork = await artworkResult
-            let result = await commentResult
+                let commentary = result.commentary
+                guard !commentary.isEmpty else {
+                    isLoading = false
+                    NSLog("[AppState] Empty comment from Apple Intelligence")
+                    errorMessage = "Apple Intelligence returned an empty response"
+                    return
+                }
 
-            guard !Task.isCancelled else {
-                NSLog("[AppState] Task cancelled (track changed before response)")
-                return
-            }
+                // Load artwork from URL if available
+                let artwork = await loadImage(from: result.artworkURL)
 
-            currentArtwork = artwork
-            isLoading = false
+                guard !Task.isCancelled else { return }
 
-            switch result {
-            case .success(let comment) where comment.isEmpty:
-                NSLog("[AppState] Empty comment from Apple Intelligence")
-                errorMessage = "Apple Intelligence returned an empty response"
+                currentArtwork = artwork
+                currentComment = commentary
+                isLoading = false
 
-            case .success(let comment):
-                NSLog("[AppState] Got comment (%d chars), showing notification", comment.count)
-                currentComment = comment
+                NSLog("[AppState] Got comment (%d chars), showing notification", commentary.count)
 
                 // Save to history
                 let entry = CommentEntry(
                     track: track,
-                    comment: comment,
+                    comment: commentary,
                     personality: personality,
                     artwork: artwork
                 )
@@ -186,20 +185,34 @@ final class AppState: ObservableObject {
                 notificationService.duration = notificationDuration
                 notificationService.send(
                     track: track,
-                    comment: comment,
+                    comment: commentary,
                     personality: personality,
                     artwork: artwork
                 )
                 NSLog("[AppState] Floating notification sent (duration: %.0fs)", notificationDuration)
 
-            case .failure(let error):
-                NSLog("[AppState] Apple Intelligence error: %@", error.localizedDescription)
-                if error is CancellationError {
-                    return
-                }
+            } catch is CancellationError {
+                NSLog("[AppState] Task cancelled")
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                isLoading = false
+                NSLog("[AppState] FicinoCore error: %@", error.localizedDescription)
                 errorMessage = error.localizedDescription
             }
         }
     }
 
+    // MARK: - Helpers
+
+    private nonisolated func loadImage(from url: URL?) async -> NSImage? {
+        guard let url else { return nil }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return NSImage(data: data)
+        } catch {
+            NSLog("[AppState] Failed to load artwork: %@", error.localizedDescription)
+            return nil
+        }
+    }
 }

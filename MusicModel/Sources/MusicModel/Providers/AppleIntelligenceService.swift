@@ -12,6 +12,13 @@ public actor AppleIntelligenceService: CommentaryService {
     public func getCommentary(for track: TrackInput, personality: Personality) async throws -> String {
         try checkAvailability()
 
+        let contextBlock: String
+        if let context = track.context, !context.isEmpty {
+            contextBlock = "\n\nAdditional context:\n\(context)\n"
+        } else {
+            contextBlock = ""
+        }
+
         let prompt = """
         Your character: \(personality.rawValue)
         \(personality.systemPrompt)
@@ -19,11 +26,12 @@ public actor AppleIntelligenceService: CommentaryService {
         Now playing:
         "\(track.name)" by \(track.artist) from the album \(track.album)\(track.genre.isEmpty ? "" : " (\(track.genre))")
         Duration: \(track.durationString)
-
+        \(contextBlock)
         React to this track IN CHARACTER. 2-3 sentences only. No disclaimers.
         """
 
-        NSLog("[AppleIntelligence] Sending commentary request as '%@' for: %@ - %@", personality.rawValue, track.name, track.artist)
+        NSLog("[AppleIntelligence] TrackInput — name: %@, artist: %@, album: %@, genre: %@, duration: %@, context: %@",
+              track.name, track.artist, track.album, track.genre, track.durationString, track.context ?? "<none>")
         return try await generate(prompt: prompt, personality: personality)
     }
 

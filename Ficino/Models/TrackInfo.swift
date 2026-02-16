@@ -1,5 +1,6 @@
 import Foundation
 import MusicModel
+import FicinoCore
 
 struct TrackInfo: Identifiable, Equatable {
     let id: String // PersistentID
@@ -44,5 +45,16 @@ struct TrackInfo: Identifiable, Equatable {
 
     var asTrackInput: TrackInput {
         TrackInput(name: name, artist: artist, album: album, genre: genre, durationString: durationString)
+    }
+
+    var asTrackRequest: TrackRequest {
+        TrackRequest(
+            name: name,
+            artist: artist,
+            album: album,
+            genre: genre,
+            durationMs: Int(totalTime * 1000),
+            persistentID: id
+        )
     }
 }
