@@ -31,27 +31,36 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 
 **Source layout:**
 - `Ficino/Models/` — Data types and state (`AppState`, `TrackInfo`, `CommentEntry`)
-- `Ficino/Services/` — Business logic (`MusicListener`, `ArtworkService`, `NotificationService`)
+- `Ficino/Services/` — Business logic (`MusicListener`, `NotificationService`)
 - `Ficino/Views/` — SwiftUI components (`MenuBarView`, `NowPlayingView`, `HistoryView`, `SettingsView`)
-- `MusicModel/` — Swift package for AI commentary layer (`CommentaryService` protocol, `AppleIntelligenceService`, `Personality`, `TrackInput`)
-- `MusicContext/` — Swift package for fetching music metadata from MusicBrainz, MusicKit, and Genius APIs
+- `FicinoCore/` — Facade actor orchestrating MusicKit lookup + prompt enrichment + commentary generation
+- `MusicModel/` — AI commentary layer (`CommentaryService` protocol, `AppleIntelligenceService`, `Personality`, `TrackInput`)
+- `MusicContext/` — Music metadata from MusicBrainz, MusicKit, and Genius APIs
 - `MusicContextGenerator/` — Standalone macOS app for testing MusicContext providers (GUI + CLI mode)
 
-**Key flow:** MusicListener detects track change via `DistributedNotificationCenter` → `AppState.handleTrackChange()` → parallel artwork fetch + commentary request (`async let`) → result saved to history → floating NSPanel notification shown.
+**Key flow:** MusicListener detects track change via `DistributedNotificationCenter` → `AppState.handleTrackChange()` → `FicinoCore.process()` (MusicKit lookup → enriched TrackInput → commentary generation) → artwork loaded from URL → result saved to history → floating NSPanel notification shown.
+
+### FicinoCore Package
+
+`FicinoCore/` is the main orchestration layer. The `FicinoCore` actor is the single entry point for the app:
+- Takes a `TrackRequest` (notification data) and returns a `TrackResult` (commentary + artwork URL)
+- Internally: MusicKit catalog search → `PromptBuilder` enriches `TrackInput` with metadata (genres, composers, editorial notes, release date, similar artists, etc.) → `CommentaryService` generates commentary
+- `CommentaryService` is dependency-injected — app passes in `AppleIntelligenceService`
+- MusicKit failures are non-fatal — commentary still generates with basic track info
 
 ### Services
 
-**AppleIntelligenceService** (in `MusicModel/`) uses the `FoundationModels` framework (macOS 26+) to generate commentary. It conforms to `CommentaryService`, the protocol boundary for the AI backend.
+**AppleIntelligenceService** (in `MusicModel/`) uses the `FoundationModels` framework (macOS 26+) to generate commentary. It conforms to `CommentaryService`, the protocol boundary for the AI backend. The prompt includes an optional `context` field from `TrackInput` with MusicKit metadata when available.
 
-**Notifications** are custom floating `NSPanel` windows (not system UNUserNotificationCenter), hosted with SwiftUI content and auto-dismissed after a configurable duration. This avoids system permission prompts and gives full control over styling/positioning.
+**Notifications** are custom floating `NSPanel` windows (not system UNUserNotificationCenter), hosted with SwiftUI content, drag-to-dismiss, and auto-dismissed after a configurable duration. This avoids system permission prompts and gives full control over styling/positioning.
 
 ### MusicModel Package
 
-`MusicModel/` is a Swift package extracted from the main app containing the AI interaction layer:
+`MusicModel/` is a Swift package containing the AI interaction layer:
 - `CommentaryService` protocol — interface for AI backends
 - `AppleIntelligenceService` — `FoundationModels` wrapper (`LanguageModelSession`)
 - `Personality` enum — single "Ficino" personality with system prompt
-- `TrackInput` — normalized track data passed to the LLM
+- `TrackInput` — normalized track data passed to the LLM (includes optional `context` for enriched metadata)
 
 ### MusicContext Package
 
@@ -78,12 +87,13 @@ xcodebuild -project Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataP
 
 ## Important Details
 
-- App sandbox is **enabled** in `Ficino.entitlements` — receiving specific named distributed notifications works inside the sandbox
+- App sandbox is **enabled** with `com.apple.security.network.client` for MusicKit catalog access
 - `FicinoApp.swift` is the `@main` entry using `MenuBarExtra` scene API
-- Album artwork fetching is stubbed out (TODO: replace with MusicKit catalog search)
+- MusicKit authorization is requested at startup for catalog search access
+- Album artwork comes from MusicKit catalog search (URL-based, loaded via URLSession)
 - History is capped at 50 entries with JPEG-compressed thumbnails (48pt, 0.7 quality)
 - Single personality ("Ficino") with a detailed system prompt defined in `Personality.swift`
 - **Preferences** persist via `UserDefaults`: skip threshold, notification duration
 - Skip threshold enforcement: only generates commentary for tracks played longer than the threshold, preventing spam from rapid skipping
-- All services use **actor isolation** for thread safety (AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, GeniusProvider, RateLimiter)
+- All services use **actor isolation** for thread safety (FicinoCore, AppleIntelligenceService, MusicBrainzProvider, MusicKitProvider, GeniusProvider, RateLimiter)
 - `AppState` and `NotificationService` are `@MainActor`-isolated for UI safety
