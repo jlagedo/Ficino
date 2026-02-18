@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Generate FM-format prompts from context_top100.jsonl.
+"""Generate FM-format prompts from a context JSONL file.
 
 Mirrors the prompt-building logic from the Swift app:
 - PromptBuilder.swift (context assembly from MusicKit + Genius metadata)
 - AppleIntelligenceService.swift (final prompt format)
 - Personality.swift (system instructions)
 
-Output: data/eval_output/prompts_top100.jsonl — one JSON object per line with
-  { "prompt" }
+Output: one JSON object per line with { "id", "prompt" }
 """
 
 import argparse
@@ -17,76 +16,6 @@ import uuid
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-INPUT = DATA_DIR / "context_top100.jsonl"
-OUTPUT = DATA_DIR / "eval_output" / "prompts_top100.jsonl"
-
-# Genre-anchored examples — one per bucket, matched to each track's primary genre.
-# Abstract: no artist/song/album names so the model can't copy content verbatim.
-# These ride through to the writing step via the "example" JSONL field.
-GENRE_EXAMPLES = {
-    "Latin": (
-        "[Facts]\n"
-        "1. Samples a 1970s salsa classic.\n"
-        "2. Opens the album as a tribute to the artist's musical roots.\n"
-        "[End of Facts]\n"
-        "Built on a 1970s salsa classic, sampled and reborn on this "
-        "homeland-centered album."
-    ),
-    "Hip-Hop/Rap": (
-        "[Facts]\n"
-        "1. Samples a soul track from the 1960s.\n"
-        "2. Fourth diss track, released less than 24 hours after the previous one.\n"
-        "[End of Facts]\n"
-        "Layers a 1960s soul sample underneath the fourth salvo in the beef — "
-        "dropped less than a day after the last one."
-    ),
-    "Pop": (
-        "[Facts]\n"
-        "1. The lead single for the artist's upcoming album.\n"
-        "2. Blends two genres in an unexpected way.\n"
-        "[End of Facts]\n"
-        "The lead single blends two unlikely genres into something fresh, "
-        "setting the tone for the album ahead."
-    ),
-    "Country": (
-        "[Facts]\n"
-        "1. A bluesy ballad about the power of love.\n"
-        "2. Hit #1 after a surprise awards show duet.\n"
-        "[End of Facts]\n"
-        "A bluesy ballad about the power of love that hit #1 "
-        "after a surprise duet at a major awards show."
-    ),
-    "R&B/Soul": (
-        "[Facts]\n"
-        "1. Samples a track that inspired the song's title.\n"
-        "2. The latest in a series of collaborations between two frequent partners.\n"
-        "[End of Facts]\n"
-        "The latest collaboration between two frequent partners, built on a "
-        "sample that gave the song its name."
-    ),
-}
-
-# Map variant genre labels to the five main buckets
-GENRE_BUCKET = {
-    "Latin": "Latin",
-    "Urbano latino": "Latin",
-    "Regional Mexican": "Latin",
-    "Hip-Hop/Rap": "Hip-Hop/Rap",
-    "Pop": "Pop",
-    "Singer/Songwriter": "Pop",
-    "K-Pop": "Pop",
-    "Country": "Country",
-    "R&B/Soul": "R&B/Soul",
-}
-# Fallback for Alternative, Indie Rock, J-Pop, Rock, etc.
-FALLBACK_EXAMPLE = (
-    "[Facts]\n"
-    "1. A breakthrough single released long after the album.\n"
-    "2. Explores themes of personal change.\n"
-    "[End of Facts]\n"
-    "A breakthrough single that arrived long after the album, "
-    "exploring themes of personal change."
-)
 
 
 JUNK_PHRASES = [
@@ -186,10 +115,15 @@ def build_prompt(entry: dict) -> dict | None:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate FM-format prompts from context JSONL.")
+    parser.add_argument("input", type=Path, help="Input context JSONL file")
+    parser.add_argument("-o", "--output", type=Path, default=None,
+                        help="Output JSONL path (default: <input_stem>_prompts.jsonl in same dir)")
     parser.add_argument("-l", type=int, default=None, help="Limit number of output prompts")
     parser.add_argument("-v", "--version", type=str, default=None,
                         help="Version tag (e.g. v17) — reads prompt template from prompts/fm_instruction_<version>.json")
     args = parser.parse_args()
+
+    output = args.output or args.input.parent / f"{args.input.stem}_prompts.jsonl"
 
     # Load prompt template from instruction file if version specified
     task_prompt = None
@@ -203,7 +137,18 @@ def main():
         if task_prompt:
             print(f"Using prompt template from {instruction_path.name}")
 
-    entries = [json.loads(line) for line in INPUT.read_text().split("\n") if line.strip()]
+    entries = []
+    malformed = 0
+    for line in args.input.read_text().split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError:
+            malformed += 1
+    if malformed:
+        print(f"Skipped {malformed} malformed lines")
     results = [build_prompt(e) for e in entries]
     skipped = results.count(None)
     results = [r for r in results if r is not None]
@@ -215,11 +160,11 @@ def main():
     if args.l is not None:
         results = results[:args.l]
 
-    with OUTPUT.open("w") as f:
+    with output.open("w") as f:
         for r in results:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-    print(f"Wrote {len(results)} prompts to {OUTPUT} (skipped {skipped} thin-context tracks)")
+    print(f"Wrote {len(results)} prompts to {output} (skipped {skipped} thin-context tracks)")
 
 
 if __name__ == "__main__":

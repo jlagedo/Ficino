@@ -283,9 +283,15 @@ enum CLIRunner {
                     consecutiveGeniusFailures = 0
                 } catch let error as MusicContextError {
                     geniusFailed += 1
-                    consecutiveGeniusFailures += 1
                     geniusStatus = "✗ genius (\(error))"
                     CLIHelpers.printErr("  Genius error: \(error)")
+                    // Only count rate limits and network errors for cooldown, not "no results"
+                    switch error {
+                    case .rateLimited, .networkError, .httpError:
+                        consecutiveGeniusFailures += 1
+                    default:
+                        break
+                    }
                 } catch {
                     geniusFailed += 1
                     consecutiveGeniusFailures += 1

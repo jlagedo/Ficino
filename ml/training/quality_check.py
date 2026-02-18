@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""Quality checks on joined prompt+response data before training.
+
+Input:  joined JSONL (id, prompt, response, stop_reason)
+Output: filtered JSONL (same format, bad rows dropped)
+"""
+
+import argparse
+import json
+from pathlib import Path
+
+import sentencepiece as spm
+
+TOKENIZER_PATH = Path.home() / "Developer" / "adapter_training_toolkit_v26_0_0" / "assets" / "tokenizer.model"
+MAX_SEQ_LEN = 4095
+
+# Mirrors prepare_toolkit_data.py — must stay in sync
+SYSTEM_PROMPT = (
+    "You are a world-class music journalist who writes short, descriptive song presentations.\n"
+    "1. ONLY use information from the provided sections.\n"
+    "2. DO NOT fabricate or alter names, titles, genres, dates, or claims.\n"
+    "3. DO NOT add any information not present in the provided sections."
+)
+TASK_PROMPT = "Task Overview: As a world-class music journalist, present this song to the user in 3 sentences in a descriptive writing tone."
+
+_sp: spm.SentencePieceProcessor | None = None
+
+
+def get_tokenizer() -> spm.SentencePieceProcessor:
+    global _sp
+    if _sp is None:
+        _sp = spm.SentencePieceProcessor()
+        _sp.Load(str(TOKENIZER_PATH))
+    return _sp
+
+
+def count_tokens(entry: dict) -> int:
+    """Estimate total token count for the full training row."""
+    sp = get_tokenizer()
+    user_content = entry["prompt"] + "\n\n" + TASK_PROMPT
+    total = (
+        len(sp.Encode(SYSTEM_PROMPT))
+        + len(sp.Encode(user_content))
+        + len(sp.Encode(entry["response"]))
+    )
+    return total
+
+
+REFUSAL_OPENERS = [
+    "i appreciate",
+    "i notice",
+    "i cannot",
+    "i can't",
+    "i'm unable",
+    "unfortunately",
+    "i need to flag",
+]
+
+
+def check(entry: dict) -> str | None:
+    """Return a rejection reason, or None if the entry passes."""
+    resp = entry.get("response", "")
+
+    # Refusal / metadata-mismatch responses
+    lower = resp.lower()
+    if any(lower.startswith(p) for p in REFUSAL_OPENERS):
+        return "refusal"
+
+    # Length bounds
+    if len(resp) < 100:
+        return "too_short"
+    if len(resp) > 1500:
+        return "too_long"
+
+    # Sequence length (full training row must fit in model context)
+    if count_tokens(entry) > MAX_SEQ_LEN:
+        return "too_many_tokens"
+
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Quality-check joined data for training.")
+    parser.add_argument("input", type=Path, help="Joined JSONL file")
+    parser.add_argument("-o", "--output", type=Path, default=None,
+                        help="Output JSONL path (default: <input_stem>_checked.jsonl)")
+    args = parser.parse_args()
+
+    output = args.output or args.input.parent / f"{args.input.stem}_checked.jsonl"
+
+    passed = 0
+    rejected = 0
+    reasons: dict[str, int] = {}
+
+    with output.open("w") as f:
+        for line in args.input.read_text().split("\n"):
+            if not line.strip():
+                continue
+            entry = json.loads(line)
+            reason = check(entry)
+            if reason:
+                rejected += 1
+                reasons[reason] = reasons.get(reason, 0) + 1
+            else:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                passed += 1
+
+    print(f"Passed: {passed}  Rejected: {rejected}  → {output}")
+    if reasons:
+        for r, count in sorted(reasons.items(), key=lambda x: -x[1]):
+            print(f"  {r}: {count}")
+
+
+if __name__ == "__main__":
+    main()

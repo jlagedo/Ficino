@@ -63,7 +63,9 @@
       "WebFetch(domain:news.ycombinator.com)",
       "WebFetch(domain:joschua.io)",
       "WebFetch(domain:mjtsai.com)",
-      "Bash(top:*)"
+      "Bash(top:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(uv add:*)"
     ]
   }
 }
