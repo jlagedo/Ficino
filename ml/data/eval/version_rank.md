@@ -6,6 +6,7 @@
 | v15 | 02-17 | 2.5 | 2.5 | 1.4 | 2.3 | 2.6 | **11.3** | 5P 6H 4E 2C 11M | 92 |
 | v16 | 02-17 | 2.5 | 2.5 | 1.8 | 2.6 | 2.4 | **11.7** | 8P 6H 1D 5E 2C 8M | 92 |
 | v17 | 02-17 | 2.8 | 2.8 | 1.9 | 2.7 | 2.9 | **13.0** | 8P 7H 1E 2M | 81 |
+| v18 | 02-19 | 3.0 | 3.0 | 2.0 | 3.0 | 3.0 | **13.9** | — | 81 |
 <!-- /summary -->
 
 ---
@@ -111,3 +112,29 @@ Faith 2.8 · Ground 2.8 · Tone 1.9 · Conc 2.7 · Acc 2.9 · **13.0/15**
 | 79 | 14.0 | Pop | Uses TrackDescription (conflicted late-night confession, wanting someone who belongs to someone else, addictive/fleeting, music video with Quen Blackwell/Milo Manheim) and ArtistBio (sombr). Accurate, grounded, natural. |
 | 77 | 14.0 | Hip-Hop/Rap | Uses TrackDescription (emotional tension, return to Fayetteville at 29, Future's hook, 'Fuck do you know 'bout Jermaine?', builds on 'Safety') and ArtistBio (J. Cole). Accurate, grounded, natural. |
 | 76 | 14.0 | Country | Uses TrackDescription (first collaboration, performed at Stagecoach 2024, Billboard #1 Song of Summer 2024, relationship struggles) and ArtistBio (Post Malone). Accurate, grounded, natural. |
+
+---
+
+## v18 — 2026-02-19
+
+Faith 3.0 · Ground 3.0 · Tone 2.0 · Conc 3.0 · Acc 3.0 · **13.9/15**
+
+**Flags:** none
+
+**Bottom 5**
+| # | Score | Genre | Issue |
+|---|-------|-------|-------|
+| 13 | 13 | Pop | Uses TrackDescription (quiet resilience, Travis Kelce's birthstone opal, opalite as man-made metaphor, Capital Breakfast interview). Slightly verbose but grounded. Accurate. |
+| 33 | 13 | Hip-Hop/Rap | Uses TrackDescription (fourth diss track, May 4 2024, Mustard production, hyphy, E-40 inflections, 'certified pedophile', Grammy sweep). Slightly verbose but accurate. Samples Used cited. |
+| 38 | 13 | Pop | Draws from TrackDescription (country-influenced synth-pop, immature men, lead single Man's Best Friend, June 2025, first #1 debut). 'Four months after deluxe' is paraphrase of bio context. Clean. |
+| 66 | 13 | Pop, Singer/Songwriter | Draws from TrackDescription (tropical house, dancehall beat, January 6 2017 release, written for Rihanna, physical vs emotional love, 33 weeks top 10, most streamed Spotify, Diamond certified). Slightly verbose but grounded. Samples Used cited. |
+| 76 | 13 | Country | Draws from TrackDescription (first Post Malone/Morgan Wallen collaboration, Stagecoach 2024 April 28, May 10 release, Billboard #1 Song of Summer 2024, relationship struggles). 'Released a month later' is paraphrase. Clean. |
+
+**Top 5**
+| # | Score | Genre | Note |
+|---|-------|-------|------|
+| 81 | 14 | Alternative | Uses TrackDescription (debut single, 13-year-old Billie Eilish, SoundCloud viral, dance instructor choreography, FINNEAS collaboration, May 18 2016 release). Accurate. |
+| 80 | 14 | Hip-Hop/Rap | Draws from TrackDescription (breakout single So Far Gone EP, #2 Billboard Hot 100, two Grammy nominations, samples 'Fallin' in Love'). Samples Used cited. Clean. |
+| 78 | 14 | R&B/Soul | Draws from TrackDescription (The Weeknd & Playboi Carti, Hurry Up Tomorrow album, São Paulo concert September 7 2024, demo leaked September 25, Instagram announcement). Clean. |
+| 77 | 14 | Hip-Hop/Rap | Uses TrackDescription (emotional tension returning to Fayetteville at 29, Future hook, 'Fuck do you know 'bout Jermaine?', builds on 'Safety', before 'Poor Thang'). Accurate. |
+| 75 | 14 | Indie Rock, Alternative | Uses TrackDescription (third single 2025, haunting ballad, unrequited love, '12 to 12' refrain, Addison Rae video, July 24 2025 release). Accurate. |

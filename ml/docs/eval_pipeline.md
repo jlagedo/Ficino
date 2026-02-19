@@ -2,6 +2,26 @@
 
 Run all commands from the `ml/` directory.
 
+## Quick run (steps 3→4→5 in one command)
+
+```sh
+# full pipeline: build prompts → run model → judge
+uv run python eval/run_eval.py v19
+
+# limit to 10, 3-pass judging
+uv run python eval/run_eval.py v19 -l 10 -p 3
+
+# skip prompt build, use existing prompts
+uv run python eval/run_eval.py v19 --prompts data/eval/prompts_top100.jsonl
+
+# just judge an existing output file
+uv run python eval/run_eval.py v19 --output data/eval/output_v19_20260219.jsonl
+```
+
+Requires context already fetched (steps 1-2) and FMPromptRunner built in Xcode.
+
+---
+
 ## Step 1 — Get a track list
 
 Scrape a chart or playlist to build a CSV eval set.
@@ -53,8 +73,8 @@ Run FMPromptRunner against a versioned instruction file. Requires the `FMPromptR
 # basic run
 eval/run_model.sh v19
 
-# limit to 10 prompts, custom temperature
-eval/run_model.sh v19 -l 10 -t 0.8
+# custom prompts file, limit to 10, custom temperature
+eval/run_model.sh v19 data/eval/my_prompts.jsonl -l 10 -t 0.8
 ```
 
 What it does:
