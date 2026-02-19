@@ -1,11 +1,14 @@
 import AppKit
 import SwiftUI
+import os
 
 @Observable
 @MainActor
 final class NotificationState {
     var isDismissing = false
 }
+
+private let logger = Logger(subsystem: "com.ficino", category: "Notification")
 
 @MainActor
 final class NotificationService {
@@ -16,7 +19,7 @@ final class NotificationService {
     var duration: TimeInterval = 30.0
 
     func send(track: TrackInfo, comment: String, artwork: NSImage?) {
-        NSLog("[Notification] Showing floating notification for: %@ (duration: %.0fs)", track.name, duration)
+        logger.info("Showing floating notification for: \(track.name) (duration: \(self.duration, format: .fixed(precision: 0))s)")
 
         // Dismiss old notification before creating new state,
         // otherwise dismiss() would mark the new state as isDismissing
@@ -94,7 +97,7 @@ final class NotificationService {
         dismissTask = nil
 
         guard let panel = window else { return }
-        NSLog("[Notification] Dismissing floating notification")
+        logger.debug("Dismissing floating notification")
         self.window = nil
 
         // Signal the SwiftUI view to animate out

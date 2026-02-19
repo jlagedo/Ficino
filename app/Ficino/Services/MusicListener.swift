@@ -1,4 +1,7 @@
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.ficino", category: "MusicListener")
 
 final class MusicListener {
     private let notificationCenter = DistributedNotificationCenter.default()
@@ -7,7 +10,7 @@ final class MusicListener {
     var onTrackChange: ((TrackInfo, String) -> Void)?
 
     func start() {
-        NSLog("[MusicListener] Subscribing to com.apple.Music.playerInfo")
+        logger.notice("Subscribing to com.apple.Music.playerInfo")
         observer = notificationCenter.addObserver(
             forName: NSNotification.Name("com.apple.Music.playerInfo"),
             object: nil,
@@ -18,7 +21,7 @@ final class MusicListener {
     }
 
     func stop() {
-        NSLog("[MusicListener] Stopping")
+        logger.notice("Stopping")
         if let observer {
             notificationCenter.removeObserver(observer)
             self.observer = nil
@@ -27,24 +30,24 @@ final class MusicListener {
 
     private func handleNotification(_ notification: Notification) {
         guard let userInfo = notification.userInfo else {
-            NSLog("[MusicListener] Notification with no userInfo, ignoring")
+            logger.debug("Notification with no userInfo, ignoring")
             return
         }
 
-        // Dump every key/value from the notification for debugging
-        NSLog("[MusicListener] ── playerInfo dump (%d keys) ──", userInfo.count)
+        // Dump every key/value from the notification for debugging (suppressed in production)
+        logger.debug("── playerInfo dump (\(userInfo.count) keys) ──")
         for (key, value) in userInfo.sorted(by: { "\($0.key)" < "\($1.key)" }) {
-            NSLog("[MusicListener]   %@ = %@ (%@)", "\(key)", "\(value)", String(describing: type(of: value)))
+            logger.debug("  \("\(key)") = \("\(value)") (\(String(describing: type(of: value))))")
         }
-        NSLog("[MusicListener] ── end dump ──")
+        logger.debug("── end dump ──")
 
         let playerState = userInfo["Player State"] as? String ?? "unknown"
         let name = userInfo["Name"] as? String ?? "?"
         let artist = userInfo["Artist"] as? String ?? "?"
-        NSLog("[MusicListener] Raw notification: \"%@\" by %@ (state: %@)", name, artist, playerState)
+        logger.info("Raw notification: \"\(name)\" by \(artist) (state: \(playerState))")
 
         guard let track = TrackInfo(userInfo: userInfo) else {
-            NSLog("[MusicListener] Could not parse TrackInfo, ignoring")
+            logger.warning("Could not parse TrackInfo, ignoring")
             return
         }
 

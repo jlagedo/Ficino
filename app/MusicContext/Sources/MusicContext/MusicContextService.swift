@@ -1,5 +1,8 @@
 import Foundation
 import MusicKit
+import os
+
+private let logger = Logger(subsystem: "com.ficino", category: "MusicContext")
 
 public actor MusicContextService {
     private let musicKit: MusicKitProvider
@@ -17,26 +20,26 @@ public actor MusicContextService {
         async let songResult: Song? = {
             do {
                 let result = try await musicKit.searchSong(artist: artist, track: name, album: album)
-                NSLog("[MusicContext] MusicKit match: \"%@\" by %@", result.title, result.artistName)
+                logger.info("MusicKit match: \"\(result.title)\" by \(result.artistName)")
                 return result
             } catch {
-                NSLog("[MusicContext] MusicKit lookup failed (non-fatal): %@", error.localizedDescription)
+                logger.warning("MusicKit lookup failed (non-fatal): \(error.localizedDescription)")
                 return nil
             }
         }()
 
         async let geniusResult: MusicContextData? = {
             guard let genius else {
-                NSLog("[MusicContext] Genius: skipped (no token)")
+                logger.debug("Genius: skipped (no token)")
                 return nil
             }
             do {
-                NSLog("[MusicContext] Genius: searching \"%@\" by %@", name, artist)
+                logger.info("Genius: searching \"\(name)\" by \(artist)")
                 let data = try await genius.fetchContext(artist: artist, track: name, album: album)
-                NSLog("[MusicContext] Genius match: \"%@\" by %@", data.track.title, data.artist.name)
+                logger.info("Genius match: \"\(data.track.title)\" by \(data.artist.name)")
                 return data
             } catch {
-                NSLog("[MusicContext] Genius lookup failed (non-fatal): %@", error.localizedDescription)
+                logger.warning("Genius lookup failed (non-fatal): \(error.localizedDescription)")
                 return nil
             }
         }()
@@ -49,7 +52,7 @@ public actor MusicContextService {
             song: song, geniusData: geniusData
         )
 
-        NSLog("[MusicContext] Built sections (%d chars):\n%@", sections.count, sections)
+        logger.debug("Built sections (\(sections.count) chars):\n\(sections)")
         return sections
     }
 

@@ -3,6 +3,9 @@ import Combine
 import MusicKit
 import MusicModel
 import FicinoCore
+import os
+
+private let logger = Logger(subsystem: "com.ficino", category: "AppState")
 
 @MainActor
 final class AppState: ObservableObject {
@@ -50,7 +53,7 @@ final class AppState: ObservableObject {
         if #available(macOS 26, *) {
             let geniusToken = Self.geniusAccessToken()
             if geniusToken != nil {
-                NSLog("[Ficino] Genius API token found, Genius context enabled")
+                logger.info("Genius API token found, Genius context enabled")
             }
             self.ficinoCore = FicinoCore(
                 commentaryService: AppleIntelligenceService(),
@@ -69,13 +72,13 @@ final class AppState: ObservableObject {
     func start() {
         guard !hasStarted else { return }
         hasStarted = true
-        NSLog("[Ficino] Starting services...")
+        logger.notice("Starting services...")
 
         #if canImport(FoundationModels)
         if #available(macOS 26, *) {
             Task {
                 let status = await FicinoCore.requestMusicKitAuthorization()
-                NSLog("[Ficino] MusicKit authorization: %@", String(describing: status))
+                logger.info("MusicKit authorization: \(String(describing: status))")
             }
         } else {
             setupError = "Ficino requires macOS 26 or later for Apple Intelligence"
@@ -86,7 +89,7 @@ final class AppState: ObservableObject {
 
         musicListener.onTrackChange = { [weak self] track, playerState in
             guard let self else { return }
-            NSLog("[Ficino] Track change: %@ - %@ (state: %@)", track.name, track.artist, playerState)
+            logger.info("Track change: \(track.name) - \(track.artist) (state: \(playerState))")
             Task { @MainActor in
                 self.handleTrackChange(track: track, playerState: playerState)
             }
@@ -104,15 +107,15 @@ final class AppState: ObservableObject {
 
     private func handleTrackChange(track: TrackInfo, playerState: String) {
         guard !isPaused else {
-            NSLog("[AppState] Paused, ignoring track change")
+            logger.debug("Paused, ignoring track change")
             return
         }
         guard playerState == "Playing" else {
-            NSLog("[AppState] State is '%@', ignoring (only handling Playing)", playerState)
+            logger.debug("State is '\(playerState)', ignoring (only handling Playing)")
             return
         }
         guard track.id != lastTrackID else {
-            NSLog("[AppState] Same track (id=%@), ignoring duplicate", track.id)
+            logger.debug("Same track (id=\(track.id)), ignoring duplicate")
             return
         }
 
@@ -120,12 +123,12 @@ final class AppState: ObservableObject {
         if let startTime = trackStartTime, skipThreshold > 0 {
             let elapsed = Date().timeIntervalSince(startTime)
             if elapsed < skipThreshold {
-                NSLog("[AppState] Previous track played %.1fs (threshold: %.1fs), skipping commentary for it", elapsed, skipThreshold)
+                logger.info("Previous track played \(elapsed, format: .fixed(precision: 1))s (threshold: \(self.skipThreshold, format: .fixed(precision: 1))s), skipping commentary for it")
             }
         }
         trackStartTime = Date()
 
-        NSLog("[AppState] New track accepted: \"%@\" by %@ (id=%@)", track.name, track.artist, track.id)
+        logger.info("New track accepted: \"\(track.name)\" by \(track.artist) (id=\(track.id))")
 
         lastTrackID = track.id
         currentTrack = track
@@ -145,7 +148,7 @@ final class AppState: ObservableObject {
                 return
             }
 
-            NSLog("[AppState] Processing track via FicinoCore...")
+            logger.info("Processing track via FicinoCore...")
 
             // Kick off artwork fetch in parallel with commentary
             async let artworkTask: NSImage? = fetchArtwork(name: track.name, artist: track.artist)
@@ -154,13 +157,13 @@ final class AppState: ObservableObject {
                 let commentary = try await core.process(track.asTrackRequest)
 
                 guard !Task.isCancelled else {
-                    NSLog("[AppState] Task cancelled (track changed before response)")
+                    logger.debug("Task cancelled (track changed before response)")
                     return
                 }
 
                 guard !commentary.isEmpty else {
                     isLoading = false
-                    NSLog("[AppState] Empty comment from Apple Intelligence")
+                    logger.warning("Empty comment from Apple Intelligence")
                     errorMessage = "Apple Intelligence returned an empty response"
                     return
                 }
@@ -174,7 +177,7 @@ final class AppState: ObservableObject {
                 currentComment = commentary
                 isLoading = false
 
-                NSLog("[AppState] Got comment (%d chars), showing notification", commentary.count)
+                logger.info("Got comment (\(commentary.count) chars), showing notification")
 
                 // Save to history
                 let entry = CommentEntry(
@@ -194,15 +197,15 @@ final class AppState: ObservableObject {
                     comment: commentary,
                     artwork: artwork
                 )
-                NSLog("[AppState] Floating notification sent (duration: %.0fs)", notificationDuration)
+                logger.info("Floating notification sent (duration: \(self.notificationDuration, format: .fixed(precision: 0))s)")
 
             } catch is CancellationError {
-                NSLog("[AppState] Task cancelled")
+                logger.debug("Task cancelled")
                 return
             } catch {
                 guard !Task.isCancelled else { return }
                 isLoading = false
-                NSLog("[AppState] FicinoCore error: %@", error.localizedDescription)
+                logger.error("FicinoCore error: \(error.localizedDescription)")
                 errorMessage = error.localizedDescription
             }
         }
@@ -232,7 +235,7 @@ final class AppState: ObservableObject {
             let (data, _) = try await URLSession.shared.data(from: url)
             return NSImage(data: data)
         } catch {
-            NSLog("[AppState] Failed to load artwork: %@", error.localizedDescription)
+            logger.error("Failed to load artwork: \(error.localizedDescription)")
             return nil
         }
     }
