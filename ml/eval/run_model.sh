@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 if [ -z "${1:-}" ]; then
-    echo "Usage: run_fm.sh <version-tag> [extra args...]"
-    echo "  e.g. run_fm.sh v19"
+    echo "Usage: run_model.sh <version-tag> [extra args...]"
+    echo "  e.g. run_model.sh v19"
     exit 1
 fi
 VERSION="$1"; shift

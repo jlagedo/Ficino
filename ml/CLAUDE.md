@@ -35,8 +35,8 @@ These live in `docs/` at the repo root:
 
 ## Eval Pipeline
 
-- **`run_fm.sh`** takes a version tag (e.g. `v15`) and derives the instruction file path automatically: `ml/prompts/fm_instruction_v15.json`
-- **`rank_output.py`** must be run in a separate terminal (it calls `claude -p`).
+- **`run_model.sh`** takes a version tag (e.g. `v15`) and derives the instruction file path automatically: `ml/prompts/fm_instruction_v15.json`
+- **`judge_output.py`** scores responses using Claude Sonnet as LLM judge.
 - Runner uses `FMPromptRunner` (Swift CLI in `app/FMPromptRunner/`).
 
 ## Context

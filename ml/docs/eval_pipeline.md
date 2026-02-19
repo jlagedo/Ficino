@@ -7,9 +7,9 @@ Run all commands from the `ml/` directory.
 Scrape a chart or playlist to build a CSV eval set.
 
 ```sh
-eval/generator.sh -p mk --charts --limit 100 > data/eval/mk_top100.csv
+eval/scrape_context.sh -p mk --charts --limit 100 > data/eval/mk_top100.csv
 # or from a named playlist:
-eval/generator.sh -p mk --playlist "Top 100: Global" > data/eval/mk_top100.csv
+eval/scrape_context.sh -p mk --playlist "Top 100: Global" > data/eval/mk_top100.csv
 ```
 
 Output: `data/eval/mk_top100.csv` — CSV with `artist,track,album` columns.
@@ -19,9 +19,9 @@ Output: `data/eval/mk_top100.csv` — CSV with `artist,track,album` columns.
 Fetch MusicKit + Genius metadata for each track, mirroring what Ficino does at runtime.
 
 ```sh
-eval/generator.sh -ce data/eval/mk_top100.csv > data/eval/context_top100.jsonl
+eval/scrape_context.sh -ce data/eval/mk_top100.csv > data/eval/context_top100.jsonl
 # resume from track N if interrupted:
-eval/generator.sh -ce data/eval/mk_top100.csv --skip 50 >> data/eval/context_top100.jsonl
+eval/scrape_context.sh -ce data/eval/mk_top100.csv --skip 50 >> data/eval/context_top100.jsonl
 ```
 
 Output: `data/eval/context_top100.jsonl` — one JSON object per track with raw metadata.
@@ -32,18 +32,18 @@ Clean the raw context and assemble structured prompts. Filters out thin-context 
 
 ```sh
 # all tracks, no instruction template
-uv run python eval/gen_fm_prompt.py data/eval/context_top100.jsonl -o data/eval/prompts_top100.jsonl
+uv run python eval/build_prompts.py data/eval/context_top100.jsonl -o data/eval/prompts_top100.jsonl
 
 # with a versioned instruction template appended
-uv run python eval/gen_fm_prompt.py data/eval/context_top100.jsonl -v v17 -o data/eval/prompts_top100.jsonl
+uv run python eval/build_prompts.py data/eval/context_top100.jsonl -v v17 -o data/eval/prompts_top100.jsonl
 
 # limit output count
-uv run python eval/gen_fm_prompt.py data/eval/context_top100.jsonl -v v17 -l 50 -o data/eval/prompts_top100.jsonl
+uv run python eval/build_prompts.py data/eval/context_top100.jsonl -v v17 -l 50 -o data/eval/prompts_top100.jsonl
 ```
 
 Output: `data/eval/prompts_top100.jsonl` — `{"id", "prompt"}` per line, ready for FMPromptRunner.
 
-> **Note:** Use `-o data/eval/prompts_top100.jsonl` to match the path `run_fm.sh` expects. Without `-o`, the default output name would be `context_top100_prompts.jsonl`.
+> **Note:** Use `-o data/eval/prompts_top100.jsonl` to match the path `run_model.sh` expects. Without `-o`, the default output name would be `context_top100_prompts.jsonl`.
 
 ## Step 4 — Run the on-device model
 
@@ -51,10 +51,10 @@ Run FMPromptRunner against a versioned instruction file. Requires the `FMPromptR
 
 ```sh
 # basic run
-eval/run_fm.sh v19
+eval/run_model.sh v19
 
 # limit to 10 prompts, custom temperature
-eval/run_fm.sh v19 -l 10 -t 0.8
+eval/run_model.sh v19 -l 10 -t 0.8
 ```
 
 What it does:
@@ -68,13 +68,13 @@ Score each response using Claude Sonnet via the Anthropic API. Requires `ANTHROP
 
 ```sh
 # score all responses
-uv run python eval/rank_output.py data/eval/output_v19_*.jsonl
+uv run python eval/judge_output.py data/eval/output_v19_*.jsonl
 
 # limit to 10 responses
-uv run python eval/rank_output.py -l 10 data/eval/output_v19_*.jsonl
+uv run python eval/judge_output.py -l 10 data/eval/output_v19_*.jsonl
 
 # 3-pass judging for more stable scores
-uv run python eval/rank_output.py -p 3 data/eval/output_v19_*.jsonl
+uv run python eval/judge_output.py -p 3 data/eval/output_v19_*.jsonl
 ```
 
 Scores on 5 dimensions (0-3 each, 15 max):

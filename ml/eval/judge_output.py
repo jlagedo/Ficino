@@ -2,9 +2,9 @@
 """Rank AFM 3B output quality using Anthropic API as LLM judge.
 
 Usage:
-    uv run python eval/rank_output.py data/eval/output_v14_*.jsonl
-    uv run python eval/rank_output.py -l 10 data/eval/output_v14_*.jsonl
-    uv run python eval/rank_output.py -l 5 -p 2 data/eval/output_v14_*.jsonl
+    uv run python eval/judge_output.py data/eval/output_v14_*.jsonl
+    uv run python eval/judge_output.py -l 10 data/eval/output_v14_*.jsonl
+    uv run python eval/judge_output.py -l 5 -p 2 data/eval/output_v14_*.jsonl
 
 Scores each prompt/response pair on 5 dimensions (0-3), flags failure
 patterns, updates data/eval/version_rank.md and writes per-response details

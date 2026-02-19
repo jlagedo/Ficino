@@ -33,7 +33,7 @@ def clean_text(text: str) -> str:
 TOKENIZER_PATH = Path.home() / "Developer" / "adapter_training_toolkit_v26_0_0" / "assets" / "tokenizer.model"
 MAX_SEQ_LEN = 4095
 
-# Mirrors prepare_toolkit_data.py — must stay in sync
+# Mirrors prep_splits.py — must stay in sync
 SYSTEM_PROMPT = (
     "You are a world-class music journalist who writes short, descriptive song presentations.\n"
     "1. ONLY use information from the provided sections.\n"
