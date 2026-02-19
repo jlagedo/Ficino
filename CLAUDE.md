@@ -13,18 +13,69 @@ docs/         Shared reference material (Apple FM specs, prompt guides, training
 
 `app/` and `ml/` are fully independent workspaces — each has its own `CLAUDE.md` with detailed guidance. They connect through the model: `ml/` iterates on prompts and fine-tuning, `app/` ships the results on-device via `FoundationModels` framework.
 
-## Build (from repo root)
+## Architecture
+
+**Data flow:** Apple Music track change → `MusicListener` (DistributedNotificationCenter) → `AppState.handleTrackChange()` → `FicinoCore.process()` → `MusicContextService` fetches metadata (MusicKit + Genius in parallel, both non-fatal) → `PromptBuilder` formats into `[Section]...[End Section]` blocks → `AppleIntelligenceService` generates commentary via `LanguageModelSession` + LoRA adapter → floating `NSPanel` notification shown → entry saved to history.
+
+**Pattern:** MVVM with single `AppState` observable. Services use actor isolation for thread safety. `CommentaryService` is dependency-injected into `FicinoCore`.
+
+### App Targets
+
+| Target | Description |
+|---|---|
+| **Ficino** | Menu bar app (UI, state, notifications) |
+| **FicinoCore** | Swift package — orchestrates metadata fetch → commentary generation |
+| **MusicModel** | Swift package — AI layer (`CommentaryService` protocol, `AppleIntelligenceService`) |
+| **MusicContext** | Swift package — metadata providers (`MusicKitProvider`, `GeniusProvider`, `PromptBuilder`) |
+| **MusicContextGenerator** | GUI + CLI testing tool for metadata fetch (`-p mk\|g <Artist> <Album> <Track>`) |
+| **FMPromptRunner** | CLI tool for ML eval pipeline — runs prompts through on-device model |
+
+### LoRA Adapter
+
+`app/ficino_music.fmadapter/` — rank 32, speculative decoding (5 tokens). Current best instruction version: `ml/prompts/fm_instruction_v18.json` (13.9/15 score, zero failure flags).
+
+## Build
+
+From repo root:
 
 ```sh
+# Main app
 xcodebuild -project app/Ficino.xcodeproj -scheme Ficino -derivedDataPath ./build build
+
+# Metadata testing tool
+xcodebuild -project app/Ficino.xcodeproj -scheme MusicContextGenerator -derivedDataPath ./build build
 ```
+
+Build output: `./build/Build/Products/Debug/Ficino.app`
+
+## ML Workflows
+
+Uses **uv** for package management (Python 3.14+). Always run with `uv run`:
+
+### Eval Pipeline
+```sh
+cd ml && uv run python eval/run_eval.py v18 -l 10
+```
+Steps: `build_prompts.py` (context → JSONL prompts) → `run_model.sh` (invokes FMPromptRunner) → `judge_output.py` (LLM-as-judge scoring via Claude Sonnet, 5 dimensions, max 15 pts).
+
+**Do NOT run `judge_output.py` from within Claude Code** — it calls `claude -p` and cannot be nested.
+
+### Training Pipeline
+Synthetic training data via Anthropic Batch API: `batch_submit.py` → `batch_retrieve.py` → `join_batches.py` → `quality_check.py` → `prep_splits.py`.
+
+See `ml/docs/` for detailed guides: `eval_pipeline.md`, `training_pipeline.md`, `lora_training_guide.md`, `data_selection_strategy.md`.
 
 ## Key Constraints
 
-- **macOS 26+ only.** Verify API availability on macOS — do not assume iOS availability.
-- **Never modify `.pbxproj`** — Xcode 16+ synchronized folders auto-detect file changes on disk.
-- **Swift 6.2** with strict concurrency. All services use actor isolation.
-- **App sandbox enabled** with `com.apple.security.network.client` for MusicKit catalog access.
+- **macOS 26+ only.** Verify API availability on macOS — do not assume iOS availability. `SystemMusicPlayer` (MusicKit) is explicitly unavailable on macOS.
+- **Never modify `.pbxproj` or any file inside `.xcodeproj`** — Xcode 16+ synchronized folders auto-detect file changes on disk. For structural changes (targets, build settings, frameworks), use Xcode GUI.
+- **Swift 6.2** with strict concurrency. All services use actor isolation (`FicinoCore`, `MusicContextService`, `MusicKitProvider`, `GeniusProvider`, `RateLimiter` are actors; `AppState` and `NotificationService` are `@MainActor`).
+- **App sandbox enabled** with `com.apple.security.network.client` and `com.apple.developer.foundation-model-adapter` entitlements.
+- **No test suite.** MusicModel and MusicContext have test targets but only stubs. Testing is manual via build and run.
+
+## Secrets
+
+Genius API requires a token. Copy `app/Secrets.xcconfig.template` to `app/Secrets.xcconfig` and fill in `GENIUS_ACCESS_TOKEN`. This file is gitignored.
 
 ## Reference Docs (`docs/`)
 
@@ -52,3 +103,11 @@ xcodebuild -project app/Ficino.xcodeproj -scheme Ficino -derivedDataPath ./build
 ## Skills
 
 - **`iterate-prompt`** — Workflow for tuning FM instruction prompts and evaluating results. Invoke with `/iterate-prompt`.
+
+## Do NOT
+
+- Modify `.pbxproj` or files inside `.xcodeproj` — synchronized folders handle this.
+- Use few-shot examples in instruction files — the 3B model copies them verbatim as fact.
+- Run `judge_output.py` inside Claude Code — it calls `claude -p` and cannot be nested.
+- Delete previous instruction versions — keep them for comparison.
+- Modify Swift files from the `ml/` workflow or Python files from the `app/` workflow — the workspaces are independent.
