@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cat > "$CI_PRIMARY_REPOSITORY_PATH/app/Secrets.xcconfig" <<EOF
+GENIUS_ACCESS_TOKEN = ${GENIUS_ACCESS_TOKEN}
+EOF
