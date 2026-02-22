@@ -3,6 +3,11 @@ import FicinoCore
 
 struct HistoryView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showFavoritesOnly = false
+
+    private var filteredHistory: [CommentaryRecord] {
+        showFavoritesOnly ? appState.history.filter(\.isFavorited) : appState.history
+    }
 
     var body: some View {
         if appState.history.isEmpty {
@@ -13,14 +18,46 @@ struct HistoryView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 8) {
-                    ForEach(appState.history) { entry in
-                        HistoryEntryView(entry: entry)
+            VStack(spacing: 0) {
+                // Filter bar
+                HStack {
+                    Text(showFavoritesOnly ? "Favorites" : "History")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    Button {
+                        showFavoritesOnly.toggle()
+                    } label: {
+                        Image(systemName: showFavoritesOnly ? "heart.fill" : "heart")
+                            .font(.caption)
+                            .foregroundStyle(showFavoritesOnly ? .red : .secondary)
                     }
+                    .buttonStyle(.plain)
+                    .help(showFavoritesOnly ? "Show all" : "Show favorites")
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
+
+                if filteredHistory.isEmpty {
+                    VStack(spacing: 4) {
+                        Text("No favorites yet")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            ForEach(filteredHistory) { entry in
+                                HistoryEntryView(entry: entry)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    }
+                }
             }
         }
     }
