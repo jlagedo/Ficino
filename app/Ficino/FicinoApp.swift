@@ -8,7 +8,7 @@ struct FicinoApp: App {
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(appState)
-                .frame(width: 380, height: 400)
+                .frame(width: 380, height: 540)
         } label: {
             Label("Ficino", systemImage: "waveform")
         }

@@ -1,4 +1,5 @@
 import SwiftUI
+import FicinoCore
 
 struct HistoryView: View {
     @EnvironmentObject var appState: AppState
@@ -26,19 +27,22 @@ struct HistoryView: View {
 }
 
 struct HistoryEntryView: View {
-    let entry: CommentEntry
+    let entry: CommentaryRecord
+    @EnvironmentObject var appState: AppState
     @State private var isHovered = false
+    @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
+                // Thumbnail
                 Group {
                     if let thumbnail = entry.thumbnailImage {
                         Image(nsImage: thumbnail)
                             .resizable()
                     } else {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
                                 .fill(.quaternary)
                             Image(systemName: "music.note")
                                 .font(.caption2)
@@ -46,14 +50,14 @@ struct HistoryEntryView: View {
                         }
                     }
                 }
-                .frame(width: 24, height: 24)
-                .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+                .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(entry.track.name)
-                        .font(.system(.body, weight: .semibold))
+                    Text(entry.trackName)
+                        .font(.system(.subheadline, weight: .semibold))
                         .lineLimit(1)
-                    Text(entry.track.artist)
+                    Text(entry.artist)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -61,33 +65,100 @@ struct HistoryEntryView: View {
 
                 Spacer()
 
+                // Hover action icons
+                HStack(spacing: 4) {
+                    // Favorite
+                    Button {
+                        appState.toggleFavorite(id: entry.id)
+                    } label: {
+                        Image(systemName: entry.isFavorited ? "heart.fill" : "heart")
+                            .font(.caption)
+                            .foregroundStyle(entry.isFavorited ? .red : .secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help(entry.isFavorited ? "Unfavorite" : "Favorite")
+
+                    // Copy
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(entry.commentary, forType: .string)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Copy commentary")
+
+                    // Apple Music link
+                    if let url = entry.appleMusicURL {
+                        Button {
+                            NSWorkspace.shared.open(url)
+                        } label: {
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Open in Apple Music")
+                    }
+                }
+                .opacity(isHovered ? 1 : 0)
+
                 Text(entry.timestamp, style: .relative)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .monospacedDigit()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .animation(.spring(duration: 0.3, bounce: 0.1), value: isExpanded)
             }
 
-            Text(entry.comment)
+            Text(entry.commentary)
                 .font(.callout)
                 .foregroundStyle(.primary)
-                .lineLimit(5)
+                .lineLimit(isExpanded ? nil : 2)
+                .animation(.spring(duration: 0.3, bounce: 0.1), value: isExpanded)
         }
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isHovered ? .tertiary : .quaternary)
+                .fill(isHovered ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary))
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isExpanded.toggle()
+        }
         .onHover { hovering in
             isHovered = hovering
         }
         .contextMenu {
             Button("Copy Comment") {
                 NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(entry.comment, forType: .string)
+                NSPasteboard.general.setString(entry.commentary, forType: .string)
+            }
+
+            Button(entry.isFavorited ? "Unfavorite" : "Favorite") {
+                appState.toggleFavorite(id: entry.id)
+            }
+
+            if let url = entry.appleMusicURL {
+                Button("Open in Apple Music") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+
+            Divider()
+
+            Button("Delete", role: .destructive) {
+                appState.deleteHistoryRecord(id: entry.id)
             }
         }
         .animation(.easeOut(duration: 0.15), value: isHovered)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(entry.track.name) by \(entry.track.artist): \(entry.comment)")
+        .accessibilityLabel("\(entry.trackName) by \(entry.artist): \(entry.commentary)")
     }
 }

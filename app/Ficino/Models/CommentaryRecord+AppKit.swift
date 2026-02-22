@@ -1,26 +1,13 @@
-import Foundation
 import AppKit
+import FicinoCore
 
-struct CommentEntry: Identifiable {
-    let id = UUID()
-    let track: TrackInfo
-    let comment: String
-    let thumbnailData: Data?
-    let timestamp: Date
-
-    init(track: TrackInfo, comment: String, artwork: NSImage? = nil) {
-        self.track = track
-        self.comment = comment
-        self.thumbnailData = Self.makeThumbnail(from: artwork, maxSize: 48)
-        self.timestamp = Date()
-    }
-
+extension CommentaryRecord {
     var thumbnailImage: NSImage? {
         guard let data = thumbnailData else { return nil }
         return NSImage(data: data)
     }
 
-    private static func makeThumbnail(from image: NSImage?, maxSize: CGFloat) -> Data? {
+    static func makeThumbnail(from image: NSImage?, maxSize: CGFloat = 48) -> Data? {
         guard let image else { return nil }
         let size = NSSize(width: maxSize, height: maxSize)
         let thumbnail = NSImage(size: size)

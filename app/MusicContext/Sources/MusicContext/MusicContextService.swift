@@ -15,7 +15,7 @@ public actor MusicContextService {
 
     /// Fetch metadata from MusicKit + Genius in parallel, format into v17 section blocks.
     /// Always returns at least a `[Song]` section — both lookups are failable.
-    public func fetch(name: String, artist: String, album: String, genre: String) async -> String {
+    public func fetch(name: String, artist: String, album: String, genre: String) async -> FetchResult {
         // MusicKit + Genius in parallel (both non-fatal)
         async let songResult: Song? = {
             do {
@@ -53,7 +53,7 @@ public actor MusicContextService {
         )
 
         logger.debug("Built sections (\(sections.count) chars):\n\(sections)")
-        return sections
+        return FetchResult(sections: sections, appleMusicURL: song?.url)
     }
 
     /// Request MusicKit authorization.

@@ -27,7 +27,7 @@ struct NowPlayingView: View {
                             .resizable()
                     } else {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .fill(.quaternary)
                             Image(systemName: "music.note")
                                 .font(.title2)
@@ -35,8 +35,8 @@ struct NowPlayingView: View {
                         }
                     }
                 }
-                .frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .accessibilityLabel("Album artwork for \(track.album)")
 
                 // Track info + comment
@@ -57,21 +57,15 @@ struct NowPlayingView: View {
                             HStack(spacing: 6) {
                                 ProgressView()
                                     .controlSize(.mini)
-                                Text("Thinking...")
+                                Text("Listening...")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
-                            .transition(.opacity)
+                            .transition(.opacity.combined(with: .move(edge: .bottom)))
                             .accessibilityLabel("Loading commentary")
                         } else if let comment = appState.currentComment {
-                            ScrollView {
-                                Text(comment)
-                                    .font(.callout)
-                                    .foregroundStyle(.primary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            .frame(maxHeight: 150)
-                            .transition(.opacity)
+                            CommentaryScrollView(text: comment)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
                         } else if let error = appState.errorMessage {
                             Text(error)
                                 .font(.subheadline)
@@ -81,7 +75,7 @@ struct NowPlayingView: View {
                                 .accessibilityLabel("Error: \(error)")
                         }
                     }
-                    .animation(.easeOut(duration: 0.2), value: appState.isLoading)
+                    .animation(.spring(duration: 0.4, bounce: 0.1), value: appState.isLoading)
                 }
 
                 Spacer(minLength: 0)
@@ -101,5 +95,55 @@ struct NowPlayingView: View {
             .padding(.vertical, 12)
             .accessibilityLabel("No track playing. Play something in Apple Music to get started.")
         }
+    }
+}
+
+// MARK: - Commentary scroll with fade gradient
+
+private struct CommentaryScrollView: View {
+    let text: String
+    @State private var contentOverflows = false
+
+    var body: some View {
+        ScrollView {
+            Text(text)
+                .font(.body)
+                .lineSpacing(3)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .background(
+                    GeometryReader { contentGeo in
+                        Color.clear.preference(
+                            key: ContentHeightKey.self,
+                            value: contentGeo.size.height
+                        )
+                    }
+                )
+        }
+        .frame(maxHeight: 120)
+        .overlay(alignment: .bottom) {
+            if contentOverflows {
+                LinearGradient(
+                    colors: [
+                        Color(.windowBackgroundColor).opacity(0.8),
+                        .clear,
+                    ],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(height: 20)
+                .allowsHitTesting(false)
+            }
+        }
+        .onPreferenceChange(ContentHeightKey.self) { height in
+            contentOverflows = height > 120
+        }
+    }
+}
+
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

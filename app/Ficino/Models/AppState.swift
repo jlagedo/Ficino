@@ -15,7 +15,7 @@ final class AppState: ObservableObject {
     @Published var currentArtwork: NSImage?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var history: [CommentEntry] = []
+    @Published var history: [CommentaryRecord] = []
     @Published var setupError: String?
 
     @Published var isPaused: Bool {
@@ -39,8 +39,6 @@ final class AppState: ObservableObject {
     private var commentTask: Task<Void, Never>?
     private var hasStarted = false
 
-    private static let historyCapacity = 50
-
     // MARK: - Lifecycle
 
     init() {
@@ -55,10 +53,15 @@ final class AppState: ObservableObject {
             if geniusToken != nil {
                 logger.info("Genius API token found, Genius context enabled")
             }
-            self.ficinoCore = FicinoCore(
-                commentaryService: AppleIntelligenceService(),
-                geniusAccessToken: geniusToken
-            )
+            do {
+                self.ficinoCore = try FicinoCore(
+                    commentaryService: AppleIntelligenceService(),
+                    geniusAccessToken: geniusToken
+                )
+            } catch {
+                logger.error("Failed to initialize FicinoCore: \(error.localizedDescription)")
+                self.setupError = "Failed to initialize history store: \(error.localizedDescription)"
+            }
         }
         #endif
 
@@ -79,6 +82,8 @@ final class AppState: ObservableObject {
             Task {
                 let status = await FicinoCore.requestMusicKitAuthorization()
                 logger.info("MusicKit authorization: \(String(describing: status))")
+                self.history = await ficinoCore?.history() ?? []
+                logger.info("Loaded \(self.history.count) history entries from store")
             }
         } else {
             setupError = "Ficino requires macOS 26 or later for Apple Intelligence"
@@ -154,14 +159,14 @@ final class AppState: ObservableObject {
             async let artworkTask: NSImage? = fetchArtwork(name: track.name, artist: track.artist)
 
             do {
-                let commentary = try await core.process(track.asTrackRequest)
+                let result = try await core.process(track.asTrackRequest)
 
                 guard !Task.isCancelled else {
                     logger.debug("Task cancelled (track changed before response)")
                     return
                 }
 
-                guard !commentary.isEmpty else {
+                guard !result.commentary.isEmpty else {
                     isLoading = false
                     logger.warning("Empty comment from Apple Intelligence")
                     errorMessage = "Apple Intelligence returned an empty response"
@@ -174,27 +179,24 @@ final class AppState: ObservableObject {
                 guard !Task.isCancelled else { return }
 
                 currentArtwork = artwork
-                currentComment = commentary
+                currentComment = result.commentary
                 isLoading = false
 
-                logger.info("Got comment (\(commentary.count) chars), showing notification")
+                logger.info("Got comment (\(result.commentary.count) chars), showing notification")
 
-                // Save to history
-                let entry = CommentEntry(
-                    track: track,
-                    comment: commentary,
-                    artwork: artwork
-                )
-                history.insert(entry, at: 0)
-                if history.count > Self.historyCapacity {
-                    history.removeLast()
+                // Update thumbnail in history store
+                if let thumbnailData = CommentaryRecord.makeThumbnail(from: artwork) {
+                    await core.updateThumbnail(id: result.id, data: thumbnailData)
                 }
+
+                // Refresh history from store
+                self.history = await core.history()
 
                 // Send floating notification
                 notificationService.duration = notificationDuration
                 notificationService.send(
                     track: track,
-                    comment: commentary,
+                    comment: result.commentary,
                     artwork: artwork
                 )
                 logger.info("Floating notification sent (duration: \(self.notificationDuration, format: .fixed(precision: 0))s)")
@@ -208,6 +210,81 @@ final class AppState: ObservableObject {
                 logger.error("FicinoCore error: \(error.localizedDescription)")
                 errorMessage = error.localizedDescription
             }
+        }
+    }
+
+    // MARK: - User Actions
+
+    func regenerate() {
+        guard let track = currentTrack else { return }
+        currentComment = nil
+        errorMessage = nil
+
+        commentTask?.cancel()
+        commentTask = Task {
+            isLoading = true
+
+            guard let core = ficinoCore else {
+                isLoading = false
+                errorMessage = "Apple Intelligence is not available"
+                return
+            }
+
+            async let artworkTask: NSImage? = fetchArtwork(name: track.name, artist: track.artist)
+
+            do {
+                let result = try await core.regenerate(track.asTrackRequest)
+
+                guard !Task.isCancelled else { return }
+
+                guard !result.commentary.isEmpty else {
+                    isLoading = false
+                    errorMessage = "Apple Intelligence returned an empty response"
+                    return
+                }
+
+                let artwork = await artworkTask
+                guard !Task.isCancelled else { return }
+
+                currentArtwork = artwork
+                currentComment = result.commentary
+                isLoading = false
+
+                if let thumbnailData = CommentaryRecord.makeThumbnail(from: artwork) {
+                    await core.updateThumbnail(id: result.id, data: thumbnailData)
+                }
+
+                self.history = await core.history()
+
+                notificationService.duration = notificationDuration
+                notificationService.send(
+                    track: track,
+                    comment: result.commentary,
+                    artwork: artwork
+                )
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                isLoading = false
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func toggleFavorite(id: UUID) {
+        Task {
+            guard let core = ficinoCore else { return }
+            _ = await core.toggleFavorite(id: id)
+            self.history = await core.history()
+        }
+    }
+
+    func deleteHistoryRecord(id: UUID) {
+        Task {
+            guard let core = ficinoCore else { return }
+            await core.deleteHistoryRecord(id: id)
+            self.history = await core.history()
         }
     }
 
