@@ -45,6 +45,16 @@ public actor AppleIntelligenceService: CommentaryService {
         return try await generate(prompt: prompt)
     }
 
+    public func prewarm() async {
+        let session = createSession()
+        do {
+            try await session.prewarm()
+            logger.debug("Model prewarmed")
+        } catch {
+            logger.warning("Prewarm failed: \(error.localizedDescription)")
+        }
+    }
+
     public func cancelCurrent() {
         currentTask?.cancel()
         currentTask = nil
@@ -53,16 +63,18 @@ public actor AppleIntelligenceService: CommentaryService {
 
     // MARK: - Private
 
+    private func createSession() -> LanguageModelSession {
+        if let adapter {
+            let model = SystemLanguageModel(adapter: adapter)
+            return LanguageModelSession(model: model, instructions: systemInstructions)
+        } else {
+            return LanguageModelSession(instructions: systemInstructions)
+        }
+    }
+
     private func generate(prompt: String) async throws -> String {
-        let adapter = self.adapter
+        let session = createSession()
         let task = Task<String, Error> {
-            let session: LanguageModelSession
-            if let adapter {
-                let model = SystemLanguageModel(adapter: adapter)
-                session = LanguageModelSession(model: model, instructions: systemInstructions)
-            } else {
-                session = LanguageModelSession(instructions: systemInstructions)
-            }
             let response = try await session.respond(to: prompt, options: GenerationOptions(temperature: 0.5))
             return response.content
         }

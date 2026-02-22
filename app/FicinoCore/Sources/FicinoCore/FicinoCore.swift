@@ -97,10 +97,12 @@ public actor FicinoCore {
         let store = historyStore
 
         let task = Task<CommentaryResult, Error> {
+            async let warmup: Void = service.prewarm()
             let fetchResult = await context.fetch(
                 name: request.name, artist: request.artist,
                 album: request.album, genre: request.genre
             )
+            _ = await warmup
 
             try Task.checkCancellation()
 
