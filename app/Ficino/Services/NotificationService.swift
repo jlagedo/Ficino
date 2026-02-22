@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import TipKit
 import os
 
 @Observable
@@ -150,6 +151,7 @@ struct FloatingNotificationView: View {
 
     @State private var appeared = false
     @State private var dragOffset: CGFloat = 0
+    private let dismissTip = DismissNotificationTip()
 
     private var slidesFromRight: Bool {
         position == .topRight || position == .bottomRight
@@ -216,6 +218,7 @@ struct FloatingNotificationView: View {
         .padding(16)
         .frame(width: 380)
         .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .popoverTip(dismissTip, arrowEdge: slidesFromRight ? .trailing : .leading)
         .contentShape(Rectangle())
         .onTapGesture { onDismiss() }
         .offset(x: slideOffset)

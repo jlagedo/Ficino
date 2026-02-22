@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 @main
 struct FicinoApp: App {
@@ -9,6 +10,9 @@ struct FicinoApp: App {
             MenuBarView()
                 .environmentObject(appState)
                 .frame(width: 380, height: 540)
+                .task {
+                    try? Tips.configure([.displayFrequency(.immediate)])
+                }
         } label: {
             Label("Ficino", systemImage: "waveform")
         }

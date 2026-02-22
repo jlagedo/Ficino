@@ -1,9 +1,11 @@
 import SwiftUI
+import TipKit
 import FicinoCore
 
 struct HistoryView: View {
     @EnvironmentObject var appState: AppState
     @State private var showFavoritesOnly = false
+    private let historyTip = HistoryInteractionTip()
 
     private var filteredHistory: [CommentaryRecord] {
         showFavoritesOnly ? appState.history.filter(\.isFavorited) : appState.history
@@ -51,7 +53,10 @@ struct HistoryView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 8) {
                             ForEach(filteredHistory) { entry in
-                                HistoryEntryView(entry: entry)
+                                HistoryEntryView(
+                                    entry: entry,
+                                    tip: entry.id == filteredHistory.first?.id ? historyTip : nil
+                                )
                             }
                         }
                         .padding(.horizontal, 16)
@@ -65,6 +70,7 @@ struct HistoryView: View {
 
 struct HistoryEntryView: View {
     let entry: CommentaryRecord
+    var tip: HistoryInteractionTip? = nil
     @EnvironmentObject var appState: AppState
     @State private var isHovered = false
     @State private var isExpanded = false
@@ -165,6 +171,7 @@ struct HistoryEntryView: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(isHovered ? AnyShapeStyle(.tertiary) : AnyShapeStyle(.quaternary))
         )
+        .popoverTip(tip, arrowEdge: .trailing)
         .contentShape(Rectangle())
         .onTapGesture {
             isExpanded.toggle()

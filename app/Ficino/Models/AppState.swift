@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import MusicKit
+import TipKit
 import MusicModel
 import FicinoCore
 import os
@@ -208,6 +209,7 @@ final class AppState: ObservableObject {
 
                 // Refresh history from store
                 self.history = await core.history()
+                await HistoryInteractionTip.commentaryReceived.donate()
 
                 // Send floating notification
                 if notificationsEnabled {
@@ -275,6 +277,7 @@ final class AppState: ObservableObject {
                 }
 
                 self.history = await core.history()
+                await HistoryInteractionTip.commentaryReceived.donate()
 
                 if notificationsEnabled {
                     notificationService.duration = notificationDuration
